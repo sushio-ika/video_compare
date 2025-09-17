@@ -5,9 +5,27 @@ from PIL import Image, ImageTk
 import threading
 import os
 from tkinterdnd2 import TkinterDnD
+from menu_file import (
+    show_how_to_use,
+    show_settings,
+    put_one_back,
+    put_one_forward,
+    copy_video,
+    paste_video,
+    cut_video,
+    delete_video,
+    save_file,
+    open_file,
+    new_file
+)
+from videosize_file import (
+    update_video_frame,
+    resize_start,
+    resize_video,
+    resize_end
+)
 
 PICTURE_WIDTH = 320  #動画表示の横幅を固定
-current_file = None  #現在開いているファイルのパス
 
 #DPI設定（Windowsでの高解像度対応）
 try:
@@ -16,14 +34,16 @@ try:
 except:
     pass
 
-#VideoAppはメインウィンドウを定義
+#メインウィンドウを定義
 class videocompare(TkinterDnD.Tk):
     def __init__(form):
         super().__init__()
         
-        form.title("動画比較アプリ")
+        form.title("マルチリンク")
         form.geometry("800x600")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
+        form.current_file = None  #現在開いているファイルのパス
+        form.resize_info = None  #サイズ変更の情報を保存する辞書
 
         #複数の動画を管理するリスト
         form.video_captures = {}  # {ファイルパス: cv2.VideoCaptureオブジェクト}
@@ -35,6 +55,7 @@ class videocompare(TkinterDnD.Tk):
         form.bind("<Button-3>", lambda event: form.right_clickmenu(event))
         form.bind("<Button-1>", lambda event: form.left_click(event, False))
         form.bind("<Control-Button-1>", lambda event: form.left_click(event, True))
+        
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -52,10 +73,11 @@ class videocompare(TkinterDnD.Tk):
         form.drop_area.config(bg="#3C3F41", fg="#FFFFFF")
 
         #ファイル選択ボタン
-        form.select_button = tk.Button(form, text="動画を選択", command=form.select_video_file)
+        form.select_button = tk.Button(form, text="＋", command=form.select_video_file)
         form.select_button.pack(pady=5)
-        form.select_button.config(bg="#3D94CE", fg="#FFFFFF")
-
+        form.select_button.config(font=("Arial", 24), width=3, height=1)
+        form.select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+        
         #tkinterdnd2を使ってドラッグ＆ドロップ機能を有効化
         form.drop_area.drop_target_register(1, 'DND_Files')
         form.drop_area.dnd_bind('<<Drop>>', form.on_drop_files)
@@ -106,12 +128,11 @@ class videocompare(TkinterDnD.Tk):
 
         form.video_info[file_path] = {'label': video_label, 'thread': thread, 'stop_flag': stop_flag}
 
-        #ドラッグアンドドロップエリアと選択ボタンを非表示
+        #ドラッグアンドドロップエリアを透明化
         form.drop_area.pack_forget()
-        form.select_button.pack_forget()
 
     def play_video(form, capture, video_label, stop_flag):
-        """動画を再生する関数（別スレッドで実行）"""
+        """動画を再生する関数"""
         while capture.isOpened() and not stop_flag.is_set():
             ret, frame = capture.read()
             if not ret:
@@ -148,12 +169,23 @@ class videocompare(TkinterDnD.Tk):
         widget = event.widget
         if widget in form.video_labels:#動画をクリックした場合
             if ctrl_click:#Ctrlキーが押されている場合
-                form.apply_image_highlight(widget)
+                if form.selected_label == widget:#すでに選択されている動画をクリックした場合
+                    form.reset_video_highlight(widget)
+                    form.selected_label = None
+                else:#新たに選択された動画をクリックした場合
+                    form.apply_image_highlight(widget)
             else:#Ctrlキーが押されていない場合
                 form.reset_all_highlights()
                 form.apply_image_highlight(widget)
+            form.selected_label = widget  # 現在選択中のラベルを保存
+
+            # サイズ変更イベントをバインド
+            widget.bind("<Button-1>", lambda event: resize_start(form, event))#左クリックでサイズ変更開始
+            widget.bind("<B1-Motion>", lambda event: resize_video(form, event))#ドラッグでサイズ変更
+            widget.bind("<ButtonRelease-1>", lambda event: resize_end(form, event))#左クリックを離したらサイズ変更終了
         else:#動画以外をクリックした場合
             form.reset_all_highlights()
+            form.selected_label = None
 
     def reset_all_highlights(form):
         """全ての動画のハイライトをリセットする"""
@@ -161,105 +193,47 @@ class videocompare(TkinterDnD.Tk):
             label.config(bd=0, relief=tk.FLAT)
             label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
 
+    def reset_video_highlight(form, label):
+        """特定の動画のハイライトをリセットする"""
+        label.config(bd=0, relief=tk.FLAT)
+        label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
+
     def apply_image_highlight(form, label):
         """選択された動画に青い枠線を適用する"""
         label.config(bd=2, relief=tk.RAISED, highlightbackground="blue", highlightcolor="blue", highlightthickness=2)
 
+    
     def right_clickmenu(form, event):
         """右クリックメニューを表示する関数"""
         menu = tk.Menu(form, tearoff=0)
-        
-        menu.add_command(label="ヘルプ", command=form.show_how_to_use)
-        menu.add_command(label="設定", command=form.show_settings) 
+        menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
+        menu.add_command(label="設定", command=lambda: show_settings(form))
         menu.add_separator()
-        menu.add_command(label="一つ戻す", command=form.put_one_back)
-        menu.add_command(label="一つ進める", command=form.put_one_forward)
+        menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
+        menu.add_command(label="一つ進める", command=lambda: put_one_forward(form))
         menu.add_separator()
-        menu.add_command(label="コピー", command=form.copy_video)
-        menu.add_command(label="貼り付け", command=form.paste_video)
-        menu.add_command(label="切り取り", command=form.cut_video)
-        menu.add_command(label="削除", command=form.delete_video)
+        menu.add_command(label="コピー", command=lambda: copy_video(form))
+        menu.add_command(label="貼り付け", command=lambda: paste_video(form))
+        menu.add_command(label="切り取り", command=lambda: cut_video(form))
+        menu.add_command(label="削除", command=lambda: delete_video(form))
         menu.add_separator()
 
         save_menu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="保存", menu=save_menu)
-        save_menu.add_command(label="上書き保存", command=lambda: form.save_file(overwrite=True))
-        save_menu.add_command(label="名前を付けて保存", command=lambda: form.save_file(overwrite=False))
-        
+        save_menu.add_command(label="上書き保存", command=lambda: save_file(form, overwrite=True))
+        save_menu.add_command(label="名前を付けて保存", command=lambda: save_file(form, overwrite=False))
+
         open_menu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="開く", menu=open_menu)
-        open_menu.add_command(label="ファイルを開く", command=form.open_file)
+        open_menu.add_command(label="ファイルを開く", command=lambda: open_file(form))
         open_menu.add_command(label="動画を開く", command=form.select_video_file)
-        
-        menu.add_command(label="新規作成", command=form.new_file)
+        menu.add_command(label="新規作成", command=lambda: new_file(form))
         menu.add_separator()
         menu.add_command(label="終了", command=form.quit)
         
         menu.post(event.x_root, event.y_root)
 
-    def show_how_to_use(form):
-        """使い方を表示"""
-        messagebox.showinfo(
-            "動画比較アプリの使い方",
-            "1. 動画を選択するには、「動画を選択」ボタンをクリックします。\n"
-            "2. 動画が再生されます。左クリックで動画を選択し、右クリックでメニューを表示します。\n"
-        )
-
-    def show_settings():
-        """設定メニューを表示"""
     
-    def put_one_back(form):
-        """操作を1つ戻す"""
-        form.edit_undo()
-
-    def put_one_forward(form):
-        """操作を1つ進める"""
-        form.edit_redo()
-
-    def copy_video(form):
-        """動画をコピーする"""
-        form.event_generate("<<Copy>>")
-
-    def paste_video(form):
-        """動画を貼り付ける"""
-        form.event_generate("<<Paste>>")
-
-    def cut_video(form):
-        """動画を切り取る"""
-        form.event_generate("<<Cut>>")
-
-    def delete_video(form):
-        """動画を削除する"""
-        form.event_generate("<<Delete>>")
-
-    def save_file(form, overwrite=False):
-        """ファイルを保存する"""
-        if overwrite:
-            form.title(current_file)
-        else:
-            # 名前を付けて保存の処理
-            file_path = filedialog.asksaveasfilename(
-                defaultextension=".vcmp",
-                filetypes=[("Video Compare Files", "*.vcmp"), ("All Files", "*.*")]
-            )
-            if file_path:
-                form.current_file = file_path
-                form.title(form.current_file)
-
-    def open_file(form):
-        """ファイルを開く"""
-        file_path = filedialog.askopenfilename(
-            title="ファイルを開く",
-            filetypes=[("Video Compare Files", "*.vcmp"), ("All Files", "*.*")]
-        )
-        if file_path:
-            form.current_file = file_path
-            form.title(form.current_file)
-
-    def new_file(form):
-        """新しいファイルを作成する"""
-        form.current_file = None
-        form.title("新規ファイル")
 
 if __name__ == '__main__':
     app = videocompare()
