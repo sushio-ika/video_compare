@@ -44,8 +44,8 @@ def save_file(form, overwrite=False):
     else:
         # 名前を付けて保存の処理
         file_path = filedialog.asksaveasfilename(
-            defaultextension=".vcmp",
-            filetypes=[("Video Compare Files", "*.vcmp"), ("All Files", "*.*")]
+            defaultextension=".mlk",
+            filetypes=[("Murti Link Files", "*.mlk"), ("All Files", "*.*")]
         )
         if file_path:
             form.current_file = file_path
@@ -55,7 +55,7 @@ def open_file(form):
     """ファイルを開く"""
     file_path = filedialog.askopenfilename(
         title="ファイルを開く",
-           filetypes=[("Video Compare Files", "*.vcmp"), ("All Files", "*.*")]
+           filetypes=[("Murti Link Files", "*.mlk"), ("All Files", "*.*")]
     )
     if file_path:
         form.current_file = file_path

@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, PhotoImage
+from tkinter import filedialog, messagebox, PhotoImage,ttk
 import cv2
 from PIL import Image, ImageTk
 import threading
 import os
 from tkinterdnd2 import TkinterDnD
+
 from menu_file import (
     show_how_to_use,
     show_settings,
@@ -18,12 +19,7 @@ from menu_file import (
     open_file,
     new_file
 )
-from videosize_file import (
-    update_video_frame,
-    resize_start,
-    resize_video,
-    resize_end
-)
+from videosize_file import VideoResize as rsz
 
 PICTURE_WIDTH = 320  #動画表示の横幅を固定
 
@@ -35,7 +31,7 @@ except:
     pass
 
 #メインウィンドウを定義
-class videocompare(TkinterDnD.Tk):
+class main(TkinterDnD.Tk):
     def __init__(form):
         super().__init__()
         
@@ -55,7 +51,7 @@ class videocompare(TkinterDnD.Tk):
         form.bind("<Button-3>", lambda event: form.right_clickmenu(event))
         form.bind("<Button-1>", lambda event: form.left_click(event, False))
         form.bind("<Control-Button-1>", lambda event: form.left_click(event, True))
-        
+
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -77,7 +73,22 @@ class videocompare(TkinterDnD.Tk):
         form.select_button.pack(pady=5)
         form.select_button.config(font=("Arial", 24), width=3, height=1)
         form.select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-        
+
+        form.btn_rewind = tk.Button(form, text="<< 5s", width=10, command=form.back)
+        form.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
+
+        form.btn_play_pause = tk.Button(form, text="▶", width=10, command=form.toggle_play)
+        form.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
+
+        form.btn_skip = tk.Button(form, text="5s >>", width=10, command=form.front)
+        form.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
+
+        form.progress_bar = ttk.Progressbar(form, orient="horizontal", length=200, mode="determinate")
+        form.progress_bar.pack(side=tk.LEFT, padx=5, pady=5)
+
+        form.lbl_timestamp = tk.Label(form, text="00:00/00:00")
+        form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
+
         #tkinterdnd2を使ってドラッグ＆ドロップ機能を有効化
         form.drop_area.drop_target_register(1, 'DND_Files')
         form.drop_area.dnd_bind('<<Drop>>', form.on_drop_files)
@@ -85,6 +96,15 @@ class videocompare(TkinterDnD.Tk):
         #動画表示用のフレーム
         form.video_frame = tk.Frame(form)
         form.video_frame.pack(fill=tk.BOTH, expand=True)
+
+    def back(form):
+        """5秒巻き戻す"""
+
+    def front(form):
+        """5秒早送りする"""
+
+    def toggle_play(form):
+        """動画の再生/一時停止を切り替える"""
 
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
@@ -122,7 +142,7 @@ class videocompare(TkinterDnD.Tk):
         
         #再生用のスレッドを開始
         stop_flag = threading.Event()
-        thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag))
+        thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag,file_path))
         thread.daemon = True
         thread.start()
 
@@ -131,33 +151,41 @@ class videocompare(TkinterDnD.Tk):
         #ドラッグアンドドロップエリアを透明化
         form.drop_area.pack_forget()
 
-    def play_video(form, capture, video_label, stop_flag):
+    def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
         while capture.isOpened() and not stop_flag.is_set():
             ret, frame = capture.read()
             if not ret:
                 break
-            
+            form.video_info[file_path]['last_frame'] = frame  # 最後のフレームを保存
+
             #動画のサイズを調整
-            frame_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-            frame_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            
+            label_width = max(50, video_label.winfo_width())
+            label_height = max(50, video_label.winfo_height())
+            frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
-            new_width = PICTURE_WIDTH
+
+            # ラベルの幅を基準にアスペクト比を維持して高さを計算
+            new_width = label_width
             new_height = int(new_width * aspect_ratio)
+
+            # ラベルの高さを超えないように調整（必要なら）
+            if new_height > label_height:
+                new_height = label_height
+                new_width = int(new_height / aspect_ratio)
 
             resized_frame = cv2.resize(frame, (new_width, new_height))
             
             frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame_rgb)
             img_tk = ImageTk.PhotoImage(img)
-            
             video_label.after(1, lambda: form.update_label_image(video_label, img_tk))
 
             delay_ms = int(1000 / capture.get(cv2.CAP_PROP_FPS))
             cv2.waitKey(delay_ms)
 
         capture.release()
+        cv2.destroyAllWindows()
 
     def update_label_image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""
@@ -180,9 +208,9 @@ class videocompare(TkinterDnD.Tk):
             form.selected_label = widget  # 現在選択中のラベルを保存
 
             # サイズ変更イベントをバインド
-            widget.bind("<Button-1>", lambda event: resize_start(form, event))#左クリックでサイズ変更開始
-            widget.bind("<B1-Motion>", lambda event: resize_video(form, event))#ドラッグでサイズ変更
-            widget.bind("<ButtonRelease-1>", lambda event: resize_end(form, event))#左クリックを離したらサイズ変更終了
+            widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
+            widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
+            widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
         else:#動画以外をクリックした場合
             form.reset_all_highlights()
             form.selected_label = None
@@ -233,8 +261,8 @@ class videocompare(TkinterDnD.Tk):
         
         menu.post(event.x_root, event.y_root)
 
-    
+
 
 if __name__ == '__main__':
-    app = videocompare()
+    app = main()
     app.mainloop()
