@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 
+
 def show_how_to_use(form):
     """使い方を表示"""
     messagebox.showinfo(
@@ -33,9 +34,22 @@ def cut_video(form):
     """動画を切り取る"""
     form.event_generate("<<Cut>>")
 
-def delete_video(form):
+def delete_video(form, widget=None):
     """動画を削除する"""
-    form.event_generate("<<Delete>>")
+    if widget is None:
+        widget = form.selected_label
+    for file_path, info in list(form.video_info.items()):
+        if info['label'] == widget:
+            info['stop_flag'].set()
+            info['capture'].release()
+            widget.destroy()
+
+            del form.video_info[file_path]
+            form.update_widget(tk.DISABLED)
+            break
+    else:
+        messagebox.showwarning("警告", "削除する動画が選択されていません。")
+        form.update_widget(tk.NORMAL)
 
 def save_file(form, overwrite=False):
     """ファイルを保存する"""

@@ -6,20 +6,8 @@ import threading
 import os
 from tkinterdnd2 import TkinterDnD
 
-from menu_file import (
-    show_how_to_use,
-    show_settings,
-    put_one_back,
-    put_one_forward,
-    copy_video,
-    paste_video,
-    cut_video,
-    delete_video,
-    save_file,
-    open_file,
-    new_file
-)
-from videosize_file import VideoResize as rsz
+from menu_file import (delete_video)
+from click_file import (left_click, right_clickmenu)
 
 PICTURE_WIDTH = 320  #動画表示の横幅を固定
 
@@ -40,19 +28,19 @@ class main(TkinterDnD.Tk):
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.current_file = None  #現在開いているファイルのパス
         form.resize_info = None  #サイズ変更の情報を保存する辞書
-
-        #複数の動画を管理するリスト
-        form.video_captures = {}  # {ファイルパス: cv2.VideoCaptureオブジェクト}
-        form.video_labels = []    # 動画を表示するLabelウィジェットのリスト
+        form.selected_label = None  #現在選択中の動画ラベル
         form.video_info = {}      # 動画の情報を管理する辞書
+
+        form.thread = None
+        form.stop_flag = None
         
         form.create_widgets()
 
-        form.bind("<Button-3>", lambda event: form.right_clickmenu(event))
-        form.bind("<Button-1>", lambda event: form.left_click(event, False))
-        form.bind("<Control-Button-1>", lambda event: form.left_click(event, True))
+        form.bind("<Button-3>", lambda event: right_clickmenu(form, event))
+        form.bind("<Button-1>", lambda event: left_click(form, event, False))
+        form.bind("<Control-Button-1>", lambda event: left_click(form, event, True))
 
-        form.control_widget(tk.DISABLED)
+        form.update_widget(tk.DISABLED)
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -74,7 +62,7 @@ class main(TkinterDnD.Tk):
         form.footer.pack(side=tk.BOTTOM, fill=tk.X)
         form.footer.config(bg="#2E2E2E")
         form.footer.pack_propagate(False)
-        form.footer.config(height=50)
+        form.footer.config(height=100)
         form.footer.pack(pady=5)
 
         # 巻き戻し
@@ -97,11 +85,11 @@ class main(TkinterDnD.Tk):
         form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
         
         # 追加・削除ボタン
-        form.footer.mini_select_button = tk.Button(form.footer, text="追加", width=10, command=form.select_video_file)
+        form.footer.mini_select_button = tk.Button(form.footer, text="追加", width=10, command=form.select_video)
         form.footer.mini_select_button.pack(side=tk.RIGHT, padx=5, pady=5)
         form.footer.mini_select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-        form.footer.btn_delete = tk.Button(form.footer, text="削除", width=10, command=lambda: delete_video(form))
+        form.footer.btn_delete = tk.Button(form.footer, text="削除", width=10, command=lambda: delete_video(form, widget=form.selected_label))
         form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
         form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
         
@@ -121,26 +109,46 @@ class main(TkinterDnD.Tk):
 
     def toggle_play(form):
         """動画の再生/一時停止を切り替える"""
+        if form.thread and form.thread.is_alive():
+            form.stop_flag.set()
+            form.footer.btn_play_pause.config(text="▶")
+        else:
+            if form.selected_label is None:
+                messagebox.showwarning("警告", "再生する動画が選択されていません。")
+                return
+            for file_path, info in form.video_info.items():
+                if info['label'] == form.selected_label:
+                    capture = info['capture']
+                    video_label = info['label']
+                    stop_flag = threading.Event()
+                    form.stop_flag = stop_flag
+                    thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag, file_path))
+                    form.thread = thread
+                    info['thread'] = thread
+                    info['stop_flag'] = stop_flag
+                    thread.start()
+                    form.footer.btn_play_pause.config(text="⏸")
+                    break
 
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
         files = form.tk.splitlist(event.data)
         for file_path in files:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
-                form.add_video_to_app(file_path)
+                form.add_video(file_path)
 
-    def select_video_file(form):
+    def select_video(form):
         """ファイルダイアログから動画を選択する関数"""
         filepath = filedialog.askopenfilename(
             title="動画を選択してください",
             filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")]
         )
         if filepath:
-            form.add_video_to_app(filepath)
+            form.add_video(filepath)
     
-    def add_video_to_app(form, file_path):
+    def add_video(form, file_path):
         """動画をアプリに追加し、再生を準備する関数"""
-        if file_path in form.video_captures:
+        if file_path in [info['capture'] for info in form.video_info.values()]:
             messagebox.showinfo("情報", "この動画はすでに追加されています。")
             return
         
@@ -150,19 +158,34 @@ class main(TkinterDnD.Tk):
             return
             
         #動画表示用のラベルを作成
-        video_label = tk.Label(form.video_frame)
+        video_label = tk.Label(form.video_frame, width=PICTURE_WIDTH, height=int(PICTURE_WIDTH * 9 / 16))
         video_label.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        form.video_labels.append(video_label)
-        form.video_captures[file_path] = capture
         
         #再生用のスレッドを開始
         stop_flag = threading.Event()
-        thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag,file_path))
-        thread.daemon = True
-        thread.start()
+        thread = None  # ← 再生スレッドは起動しない
 
-        form.video_info[file_path] = {'label': video_label, 'thread': thread, 'stop_flag': stop_flag}
+        form.video_info[file_path] = {
+            'capture': capture,
+            'label': video_label, 
+            'thread': thread, 
+            'stop_flag': stop_flag,
+            'last_frame': None
+        }
+
+        # 最初のフレームだけ表示
+        ret, frame = capture.read()
+        if ret:
+            form.video_info[file_path]['last_frame'] = frame
+            frame_height, frame_width = frame.shape[:2]
+            aspect_ratio = frame_height / frame_width
+            new_width = PICTURE_WIDTH
+            new_height = int(new_width * aspect_ratio)
+            resized_frame = cv2.resize(frame, (new_width, new_height))
+            frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame_rgb)
+            img_tk = ImageTk.PhotoImage(img)
+            form.update_label_image(video_label, img_tk)
 
         #ドラッグアンドドロップエリアを透明化
         form.drop_area.pack_forget()        
@@ -176,13 +199,13 @@ class main(TkinterDnD.Tk):
             form.video_info[file_path]['last_frame'] = frame  # 最後のフレームを保存
 
             #動画のサイズを調整
-            label_width = max(50, video_label.winfo_width())
+            label_width = max(50, min(80, video_label.winfo_width()))
             label_height = max(50, video_label.winfo_height())
             frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
 
             # ラベルの幅を基準にアスペクト比を維持して高さを計算
-            new_width = label_width
+            new_width = max(50, min(800, int(video_label.winfo_width())))
             new_height = int(new_width * aspect_ratio)
 
             # ラベルの高さを超えないように調整（必要なら）
@@ -198,12 +221,13 @@ class main(TkinterDnD.Tk):
             video_label.after(1, lambda: form.update_label_image(video_label, img_tk))
 
             delay_ms = int(1000 / capture.get(cv2.CAP_PROP_FPS))
+            
             cv2.waitKey(delay_ms)
 
         capture.release()
         cv2.destroyAllWindows()
 
-    def control_widget(form, state):
+    def update_widget(form, state):
         """動画再生コントロールの有効/無効を切り替える関数"""
         form.footer.btn_rewind.config(state=state)
         form.footer.btn_play_pause.config(state=state)
@@ -215,80 +239,6 @@ class main(TkinterDnD.Tk):
         """ラベルの画像を更新する関数"""
         video_label.config(image=img_tk)
         video_label.image = img_tk
-
-    def left_click(form, event, ctrl_click):
-        """マウスの左クリックを処理する"""
-        widget = event.widget
-        if widget in form.video_labels:#動画をクリックした場合
-            if ctrl_click:#Ctrlキーが押されている場合
-                if form.selected_label == widget:#すでに選択されている動画をクリックした場合
-                    form.reset_video_highlight(widget)
-                    form.selected_label = None
-                else:#新たに選択された動画をクリックした場合
-                    form.apply_image_highlight(widget)
-            else:#Ctrlキーが押されていない場合
-                form.reset_all_highlights()
-                form.apply_image_highlight(widget)
-            form.selected_label = widget  # 現在選択中のラベルを保存
-
-            # サイズ変更イベントをバインド
-            widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
-            widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
-            widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
-
-            form.control_widget(tk.NORMAL)#動画再生コントロールを有効化
-
-        else:#動画以外をクリックした場合
-            form.control_widget(tk.DISABLED)#動画再生コントロールを無効化
-            form.reset_all_highlights()
-            form.selected_label = None
-
-    def reset_all_highlights(form):
-        """全ての動画のハイライトをリセットする"""
-        for label in form.video_labels:
-            label.config(bd=0, relief=tk.FLAT)
-            label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
-
-    def reset_video_highlight(form, label):
-        """特定の動画のハイライトをリセットする"""
-        label.config(bd=0, relief=tk.FLAT)
-        label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
-
-    def apply_image_highlight(form, label):
-        """選択された動画に青い枠線を適用する"""
-        label.config(bd=2, relief=tk.RAISED, highlightbackground="blue", highlightcolor="blue", highlightthickness=2)
-
-    
-    def right_clickmenu(form, event):
-        """右クリックメニューを表示する関数"""
-        menu = tk.Menu(form, tearoff=0)
-        menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
-        menu.add_command(label="設定", command=lambda: show_settings(form))
-        menu.add_separator()
-        menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
-        menu.add_command(label="一つ進める", command=lambda: put_one_forward(form))
-        menu.add_separator()
-        menu.add_command(label="コピー", command=lambda: copy_video(form))
-        menu.add_command(label="貼り付け", command=lambda: paste_video(form))
-        menu.add_command(label="切り取り", command=lambda: cut_video(form))
-        menu.add_command(label="削除", command=lambda: delete_video(form))
-        menu.add_separator()
-
-        save_menu = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="保存", menu=save_menu)
-        save_menu.add_command(label="上書き保存", command=lambda: save_file(form, overwrite=True))
-        save_menu.add_command(label="名前を付けて保存", command=lambda: save_file(form, overwrite=False))
-
-        open_menu = tk.Menu(menu, tearoff=0)
-        menu.add_cascade(label="開く", menu=open_menu)
-        open_menu.add_command(label="ファイルを開く", command=lambda: open_file(form))
-        open_menu.add_command(label="動画を開く", command=form.select_video_file)
-        menu.add_command(label="新規作成", command=lambda: new_file(form))
-        menu.add_separator()
-        menu.add_command(label="終了", command=form.quit)
-        
-        menu.post(event.x_root, event.y_root)
-
 
 
 if __name__ == '__main__':
