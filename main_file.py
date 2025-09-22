@@ -52,6 +52,7 @@ class main(TkinterDnD.Tk):
         form.bind("<Button-1>", lambda event: form.left_click(event, False))
         form.bind("<Control-Button-1>", lambda event: form.left_click(event, True))
 
+        form.control_widget(tk.DISABLED)
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -68,27 +69,42 @@ class main(TkinterDnD.Tk):
         form.drop_area.pack(pady=10, fill=tk.BOTH, expand=True)
         form.drop_area.config(bg="#3C3F41", fg="#FFFFFF")
 
-        #ファイル選択ボタン
-        form.select_button = tk.Button(form, text="＋", command=form.select_video_file)
-        form.select_button.pack(pady=5)
-        form.select_button.config(font=("Arial", 24), width=3, height=1)
-        form.select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+        # 動画再生コントロールを設置するフッターを作成
+        form.footer = tk.Frame(form)
+        form.footer.pack(side=tk.BOTTOM, fill=tk.X)
+        form.footer.config(bg="#2E2E2E")
+        form.footer.pack_propagate(False)
+        form.footer.config(height=50)
+        form.footer.pack(pady=5)
 
-        form.btn_rewind = tk.Button(form, text="<< 5s", width=10, command=form.back)
-        form.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
+        # 巻き戻し
+        form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=10, command=form.back)
+        form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
 
-        form.btn_play_pause = tk.Button(form, text="▶", width=10, command=form.toggle_play)
-        form.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
+        # 再生/一時停止
+        form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=form.toggle_play)
+        form.footer.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
 
-        form.btn_skip = tk.Button(form, text="5s >>", width=10, command=form.front)
-        form.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
+        # 早送り
+        form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=10, command=form.front)
+        form.footer.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
 
-        form.progress_bar = ttk.Progressbar(form, orient="horizontal", length=200, mode="determinate")
+        # 進捗バーとタイムスタンプ
+        form.progress_bar = ttk.Progressbar(form.footer, orient="horizontal", length=200, mode="determinate")
         form.progress_bar.pack(side=tk.LEFT, padx=5, pady=5)
 
-        form.lbl_timestamp = tk.Label(form, text="00:00/00:00")
+        form.lbl_timestamp = tk.Label(form.footer, text="00:00/00:00")
         form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        # 追加・削除ボタン
+        form.footer.mini_select_button = tk.Button(form.footer, text="追加", width=10, command=form.select_video_file)
+        form.footer.mini_select_button.pack(side=tk.RIGHT, padx=5, pady=5)
+        form.footer.mini_select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
+        form.footer.btn_delete = tk.Button(form.footer, text="削除", width=10, command=lambda: delete_video(form))
+        form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
+        form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
+        
         #tkinterdnd2を使ってドラッグ＆ドロップ機能を有効化
         form.drop_area.drop_target_register(1, 'DND_Files')
         form.drop_area.dnd_bind('<<Drop>>', form.on_drop_files)
@@ -149,7 +165,7 @@ class main(TkinterDnD.Tk):
         form.video_info[file_path] = {'label': video_label, 'thread': thread, 'stop_flag': stop_flag}
 
         #ドラッグアンドドロップエリアを透明化
-        form.drop_area.pack_forget()
+        form.drop_area.pack_forget()        
 
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
@@ -187,6 +203,14 @@ class main(TkinterDnD.Tk):
         capture.release()
         cv2.destroyAllWindows()
 
+    def control_widget(form, state):
+        """動画再生コントロールの有効/無効を切り替える関数"""
+        form.footer.btn_rewind.config(state=state)
+        form.footer.btn_play_pause.config(state=state)
+        form.footer.btn_skip.config(state=state)
+        form.lbl_timestamp.config(state=state)
+        form.footer.btn_delete.config(state=state)
+
     def update_label_image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""
         video_label.config(image=img_tk)
@@ -211,7 +235,11 @@ class main(TkinterDnD.Tk):
             widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
             widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
             widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
+
+            form.control_widget(tk.NORMAL)#動画再生コントロールを有効化
+
         else:#動画以外をクリックした場合
+            form.control_widget(tk.DISABLED)#動画再生コントロールを無効化
             form.reset_all_highlights()
             form.selected_label = None
 
