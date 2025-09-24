@@ -13,7 +13,6 @@ from menu_file import (
     open_file,
     new_file
 )
-from videosize_file import VideoResize as rsz
 
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
@@ -31,9 +30,9 @@ def left_click(form, event, ctrl_click):
             form.selected_label = widget  # 現在選択中のラベルを保存
 
             # サイズ変更イベントをバインド
-            widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
-            widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
-            widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
+            # widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
+            # widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
+            # widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
 
             form.update_widget(tk.NORMAL)#動画再生コントロールを有効化
 

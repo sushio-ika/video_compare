@@ -35,7 +35,7 @@ def cut_video(form):
     form.event_generate("<<Cut>>")
 
 def delete_video(form, widget=None):
-    """動画を削除する"""
+    """現在選択している動画を削除する"""
     if widget is None:
         widget = form.selected_label
     for file_path, info in list(form.video_info.items()):

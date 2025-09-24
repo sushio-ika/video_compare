@@ -9,7 +9,10 @@ from tkinterdnd2 import TkinterDnD
 from menu_file import (delete_video)
 from click_file import (left_click, right_clickmenu)
 
-PICTURE_WIDTH = 320  #動画表示の横幅を固定
+#定数
+WINDOW_MAX_SIZE=1280
+WINDOW_MIN_SIZE=900
+PICTURE_WIDTH = 400  #動画表示の横幅を固定
 
 #DPI設定（Windowsでの高解像度対応）
 try:
@@ -22,18 +25,31 @@ except:
 class main(TkinterDnD.Tk):
     def __init__(form):
         super().__init__()
-        
-        form.title("マルチリンク")
-        form.geometry("800x600")
-        form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
+        # 変数の初期化
         form.current_file = None  #現在開いているファイルのパス
         form.resize_info = None  #サイズ変更の情報を保存する辞書
         form.selected_label = None  #現在選択中の動画ラベル
         form.video_info = {}      # 動画の情報を管理する辞書
 
+        form.set_size = 3 #動画をいくつ横に並べるか
+
         form.thread = None
         form.stop_flag = None
+
+        # ウィンドウの基本設定
+        form.title("マルチリンク")
+        form.geometry(f"{WINDOW_MAX_SIZE}x{WINDOW_MIN_SIZE}")
+        form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
+        form.resizable(True, True)
+        form.minsize(WINDOW_MAX_SIZE, WINDOW_MIN_SIZE)
+
+        # ドラッグ＆ドロップの設定
+        form.drop_target_register(1, 'DND_Files')
+        form.dnd_bind('<<Drop>>', form.on_drop_files)
+
         
+
+
         form.create_widgets()
 
         form.bind("<Button-3>", lambda event: right_clickmenu(form, event))
@@ -41,6 +57,7 @@ class main(TkinterDnD.Tk):
         form.bind("<Control-Button-1>", lambda event: left_click(form, event, True))
 
         form.update_widget(tk.DISABLED)
+        form.change_size(form.set_size)
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -52,10 +69,26 @@ class main(TkinterDnD.Tk):
 
     def create_widgets(form):
         """UI部品の配置""" 
-        #ドロップエリア（Labelウィジェットとして作成）
-        form.drop_area = tk.Label(form, text="ここに動画をドラッグ＆ドロップ",relief="solid", bd=1, width=60, height=20)
-        form.drop_area.pack(pady=10, fill=tk.BOTH, expand=True)
-        form.drop_area.config(bg="#3C3F41", fg="#FFFFFF")
+        # ヘッダーを作成
+        form.header = tk.Frame(form)
+        form.header.pack(side=tk.TOP, fill=tk.X)
+        form.header.config(bg="#2E2E2E")
+        form.header.pack_propagate(False)
+        form.header.config(height=50)
+        form.header.pack(pady=5)
+
+        # 画面サイズを変更するボタン
+        form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
+        form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
+        form.header.btn_size_minus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+        
+        form.header.btn_size_plus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_size(form.set_size - 1))
+        form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
+        form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+
+        # 画面中央にドラッグアンドドロップのヒントを表示
+        form.lbl_hint = tk.Label(form, text="ここに動画ファイルをドラッグ＆ドロップしてください", bg="#2E2E2E", fg="#AAAAAA")
+        form.lbl_hint.pack(pady=20)
 
         # 動画再生コントロールを設置するフッターを作成
         form.footer = tk.Frame(form)
@@ -92,10 +125,6 @@ class main(TkinterDnD.Tk):
         form.footer.btn_delete = tk.Button(form.footer, text="削除", width=10, command=lambda: delete_video(form, widget=form.selected_label))
         form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
         form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
-        
-        #tkinterdnd2を使ってドラッグ＆ドロップ機能を有効化
-        form.drop_area.drop_target_register(1, 'DND_Files')
-        form.drop_area.dnd_bind('<<Drop>>', form.on_drop_files)
         
         #動画表示用のフレーム
         form.video_frame = tk.Frame(form)
@@ -159,8 +188,13 @@ class main(TkinterDnD.Tk):
             
         #動画表示用のラベルを作成
         video_label = tk.Label(form.video_frame, width=PICTURE_WIDTH, height=int(PICTURE_WIDTH * 9 / 16))
-        video_label.pack(side=tk.LEFT, padx=5, pady=5)
-        
+         # 追加前にvideo_infoへ一時追加
+        temp_count = len(form.video_info)  # 追加前の数
+        col = temp_count % form.set_size
+        row = temp_count // form.set_size
+        video_label.grid(row=row, column=col, padx=5, pady=5)
+
+
         #再生用のスレッドを開始
         stop_flag = threading.Event()
         thread = None  # ← 再生スレッドは起動しない
@@ -187,8 +221,9 @@ class main(TkinterDnD.Tk):
             img_tk = ImageTk.PhotoImage(img)
             form.update_label_image(video_label, img_tk)
 
-        #ドラッグアンドドロップエリアを透明化
-        form.drop_area.pack_forget()        
+        # ヒントラベルを非表示にする
+        if form.lbl_hint.winfo_ismapped():
+            form.lbl_hint.pack_forget()
 
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
@@ -239,6 +274,35 @@ class main(TkinterDnD.Tk):
         """ラベルの画像を更新する関数"""
         video_label.config(image=img_tk)
         video_label.image = img_tk
+
+    def change_size(form, s):
+        """動画表示の列数を変更する関数"""
+        # 列数の範囲を制限
+        s = max(1, min(5, s))
+        form.set_size = s
+
+        # 新しい幅を計算
+        new_width = WINDOW_MAX_SIZE // form.set_size - 10  # パディングを考慮
+        new_height = int(new_width * 9 / 16)  # 16:9の比率
+
+        # すべての動画ラベルのサイズを変更
+        for idx, info in enumerate(form.video_info.values()):
+            label = info['label']
+            label.config(width=new_width, height=new_height)
+            col = idx % form.set_size
+            row = idx // form.set_size
+            label.grid(row=row, column=col, padx=5, pady=5)
+            last_frame = info.get('last_frame')
+            if last_frame is not None:
+                frame_height, frame_width = last_frame.shape[:2]
+                aspect_ratio = frame_height / frame_width
+                disp_height = int(new_width * aspect_ratio)
+                resized_frame = cv2.resize(last_frame, (new_width, disp_height))
+                frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(frame_rgb)
+                img_tk = ImageTk.PhotoImage(img)
+                form.update_label_image(label, img_tk)
+
 
 
 if __name__ == '__main__':
