@@ -14,6 +14,15 @@ from menu_file import (
     new_file
 )
 
+def on_mousewheel(form, event):
+    # 動画がある範囲のみスクロール可能にする
+    if form.canvas.winfo_height() < form.canvas.bbox("all")[3]:
+        if event.delta > 0:
+            form.canvas.yview_scroll(-1, "units")
+        else:
+            form.canvas.yview_scroll(1, "units")
+    form.canvas.yview_moveto(max(0, min(form.canvas.yview()[0], 1)))
+
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
         widget = event.widget

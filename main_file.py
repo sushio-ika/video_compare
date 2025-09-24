@@ -5,9 +5,11 @@ from PIL import Image, ImageTk
 import threading
 import os
 from tkinterdnd2 import TkinterDnD
+import time
 
 from menu_file import (delete_video)
-from click_file import (left_click, right_clickmenu)
+from click_file import (left_click, right_clickmenu, on_mousewheel)
+from create_item_file import (create_widgets)
 
 #定数
 WINDOW_MAX_SIZE=1280
@@ -31,7 +33,7 @@ class main(TkinterDnD.Tk):
         form.selected_label = None  #現在選択中の動画ラベル
         form.video_info = {}      # 動画の情報を管理する辞書
 
-        form.set_size = 3 #動画をいくつ横に並べるか
+        form.set_size = 3 # 動画の列数
 
         form.thread = None
         form.stop_flag = None
@@ -47,14 +49,12 @@ class main(TkinterDnD.Tk):
         form.drop_target_register(1, 'DND_Files')
         form.dnd_bind('<<Drop>>', form.on_drop_files)
 
-        
-
-
-        form.create_widgets()
+        create_widgets(form)
 
         form.bind("<Button-3>", lambda event: right_clickmenu(form, event))
         form.bind("<Button-1>", lambda event: left_click(form, event, False))
         form.bind("<Control-Button-1>", lambda event: left_click(form, event, True))
+        form.bind("<MouseWheel>", lambda event: on_mousewheel(form, event))
 
         form.update_widget(tk.DISABLED)
         form.change_size(form.set_size)
@@ -67,68 +67,6 @@ class main(TkinterDnD.Tk):
 
         form.geometry(f"+{x}+{y}")
 
-    def create_widgets(form):
-        """UI部品の配置""" 
-        # ヘッダーを作成
-        form.header = tk.Frame(form)
-        form.header.pack(side=tk.TOP, fill=tk.X)
-        form.header.config(bg="#2E2E2E")
-        form.header.pack_propagate(False)
-        form.header.config(height=50)
-        form.header.pack(pady=5)
-
-        # 画面サイズを変更するボタン
-        form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
-        form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
-        form.header.btn_size_minus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-        
-        form.header.btn_size_plus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_size(form.set_size - 1))
-        form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
-        form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-
-        # 画面中央にドラッグアンドドロップのヒントを表示
-        form.lbl_hint = tk.Label(form, text="ここに動画ファイルをドラッグ＆ドロップしてください", bg="#2E2E2E", fg="#AAAAAA")
-        form.lbl_hint.pack(pady=20)
-
-        # 動画再生コントロールを設置するフッターを作成
-        form.footer = tk.Frame(form)
-        form.footer.pack(side=tk.BOTTOM, fill=tk.X)
-        form.footer.config(bg="#2E2E2E")
-        form.footer.pack_propagate(False)
-        form.footer.config(height=100)
-        form.footer.pack(pady=5)
-
-        # 巻き戻し
-        form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=10, command=form.back)
-        form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # 再生/一時停止
-        form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=form.toggle_play)
-        form.footer.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # 早送り
-        form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=10, command=form.front)
-        form.footer.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # 進捗バーとタイムスタンプ
-        form.progress_bar = ttk.Progressbar(form.footer, orient="horizontal", length=200, mode="determinate")
-        form.progress_bar.pack(side=tk.LEFT, padx=5, pady=5)
-
-        form.lbl_timestamp = tk.Label(form.footer, text="00:00/00:00")
-        form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        # 追加・削除ボタン
-        form.footer.mini_select_button = tk.Button(form.footer, text="追加", width=10, command=form.select_video)
-        form.footer.mini_select_button.pack(side=tk.RIGHT, padx=5, pady=5)
-        form.footer.mini_select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-
-        form.footer.btn_delete = tk.Button(form.footer, text="削除", width=10, command=lambda: delete_video(form, widget=form.selected_label))
-        form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
-        form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
-        
-        #動画表示用のフレーム
-        form.video_frame = tk.Frame(form)
-        form.video_frame.pack(fill=tk.BOTH, expand=True)
 
     def back(form):
         """5秒巻き戻す"""
@@ -138,27 +76,52 @@ class main(TkinterDnD.Tk):
 
     def toggle_play(form):
         """動画の再生/一時停止を切り替える"""
-        if form.thread and form.thread.is_alive():
-            form.stop_flag.set()
-            form.footer.btn_play_pause.config(text="▶")
+        form.paused = not form.paused
+        if form.paused:
+            create_widgets.btn_play_pause.config(text="▶")
         else:
-            if form.selected_label is None:
-                messagebox.showwarning("警告", "再生する動画が選択されていません。")
-                return
-            for file_path, info in form.video_info.items():
-                if info['label'] == form.selected_label:
-                    capture = info['capture']
-                    video_label = info['label']
-                    stop_flag = threading.Event()
-                    form.stop_flag = stop_flag
-                    thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag, file_path))
-                    form.thread = thread
-                    info['thread'] = thread
-                    info['stop_flag'] = stop_flag
-                    thread.start()
-                    form.footer.btn_play_pause.config(text="⏸")
-                    break
+            create_widgets.btn_play_pause.config(text="⏸")
+            form.update()
 
+    def update(form):
+        if not form.paused:
+            start_time = time.time()
+            ret, frame = form.vid.read()
+            if ret:
+                form.photo = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+                form.canvas.config(width=form.vid.get(cv2.CAP_PROP_FRAME_WIDTH), height=form.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                form.canvas.create_image(0, 0, image=form.photo, anchor=tk.NW)
+
+                current_frame = int(form.vid.get(cv2.CAP_PROP_POS_FRAMES))
+                total_frames = int(form.vid.get(cv2.CAP_PROP_FRAME_COUNT))
+                create_widgets.progress_bar["value"] = (current_frame / total_frames) * 100
+
+                current_time = int(form.vid.get(cv2.CAP_PROP_POS_MSEC) / 1000)
+                total_time = int(total_frames / form.vid.get(cv2.CAP_PROP_FPS))
+
+                current_time_str = form.format_time(current_time)
+                total_time_str = form.format_time(total_time)
+                create_widgets.lbl_timestamp.config(text=f"{current_time_str}/{total_time_str}")
+                
+                fps = form.vid.get(cv2.CAP_PROP_FPS)
+                delay = int(1000 / fps)
+                elapsed = int((time.time() - start_time) * 1000)
+                delay = max(1, delay - elapsed)
+                form.window.after(delay, form.update)
+            else:
+                form.toggle_play()
+        else:
+            create_widgets.btn_play_pause.config(text="▶")
+
+    def format_time(form, seconds):
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = seconds % 60
+        if hours > 0:
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        else:
+            return f"{minutes:02d}:{seconds:02d}"
+        
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
         files = form.tk.splitlist(event.data)
@@ -177,7 +140,8 @@ class main(TkinterDnD.Tk):
     
     def add_video(form, file_path):
         """動画をアプリに追加し、再生を準備する関数"""
-        if file_path in [info['capture'] for info in form.video_info.values()]:
+        # すでに追加されている場合は無視
+        if file_path in form.video_info:
             messagebox.showinfo("情報", "この動画はすでに追加されています。")
             return
         
@@ -187,7 +151,7 @@ class main(TkinterDnD.Tk):
             return
             
         #動画表示用のラベルを作成
-        video_label = tk.Label(form.video_frame, width=PICTURE_WIDTH, height=int(PICTURE_WIDTH * 9 / 16))
+        video_label = tk.Label(form.video_frame, width=WINDOW_MAX_SIZE // form.set_size - 10, height=int((WINDOW_MAX_SIZE // form.set_size - 10) * 9 / 16))
          # 追加前にvideo_infoへ一時追加
         temp_count = len(form.video_info)  # 追加前の数
         col = temp_count % form.set_size
@@ -213,7 +177,7 @@ class main(TkinterDnD.Tk):
             form.video_info[file_path]['last_frame'] = frame
             frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
-            new_width = PICTURE_WIDTH
+            new_width = WINDOW_MAX_SIZE // form.set_size - 10  # パディングを考慮
             new_height = int(new_width * aspect_ratio)
             resized_frame = cv2.resize(frame, (new_width, new_height))
             frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
@@ -221,9 +185,10 @@ class main(TkinterDnD.Tk):
             img_tk = ImageTk.PhotoImage(img)
             form.update_label_image(video_label, img_tk)
 
+
         # ヒントラベルを非表示にする
-        if form.lbl_hint.winfo_ismapped():
-            form.lbl_hint.pack_forget()
+        # if form.lbl_hint.winfo_ismapped():
+        #    form.lbl_hint.pack_forget()
 
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
