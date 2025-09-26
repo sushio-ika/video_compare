@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
+from menu_file import(delete_video)
+
 def create_widgets(form):
     """UI部品の配置""" 
     # ヘッダーを作成
@@ -28,7 +30,11 @@ def create_widgets(form):
     form.header.btn_new.pack(side=tk.LEFT, padx=5, pady=5)
     form.header.btn_new.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    
+    # 選択中の動画名を表示するラベル
+    form.header.lbl_video_name=tk.Label(form.header,text="選択動画：",width=100 )
+    form.header.lbl_video_name.pack(side=tk.LEFT,padx=5,pady=5)
+    form.header.lbl_video_name.config(bg="#FFFFFF",fg="#000000")
+
     # 画面サイズを変更するボタン
     form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
     form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
@@ -51,7 +57,7 @@ def create_widgets(form):
     form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 再生/一時停止
-    form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=form.toggle_play)
+    form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=lambda: form.toggle_play)
     form.footer.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 早送り
@@ -71,7 +77,7 @@ def create_widgets(form):
     form.footer.mini_select_button.pack(side=tk.RIGHT, padx=5, pady=5)
     form.footer.mini_select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    form.footer.btn_delete = tk.Button(form.footer, text="削除", width=20, command=lambda: form.delete_video(widget=form.selected_label))
+    form.footer.btn_delete = tk.Button(form.footer, text="削除", width=20, command=lambda: delete_video(form, widgets=list(form.selected_label.keys())))
     form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
     form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
         

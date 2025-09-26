@@ -30,7 +30,7 @@ class main(TkinterDnD.Tk):
         # 変数の初期化
         form.current_file = None  #現在開いているファイルのパス
         form.resize_info = None  #サイズ変更の情報を保存する辞書
-        form.selected_label = None  #現在選択中の動画ラベル
+        form.selected_label = {}  #選択中の動画ラベルを管理する辞書
         form.video_info = {}      # 動画の情報を管理する辞書
 
         form.set_size = 3 # 動画の列数

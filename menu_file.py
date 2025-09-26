@@ -34,22 +34,38 @@ def cut_video(form):
     """動画を切り取る"""
     form.event_generate("<<Cut>>")
 
-def delete_video(form, widget=None):
+def delete_video(form, widgets=None):
     """現在選択している動画を削除する"""
-    if widget is None:
-        widget = form.selected_label
-    for file_path, info in list(form.video_info.items()):
-        if info['label'] == widget:
-            info['stop_flag'].set()
-            info['capture'].release()
+    if widgets is None:
+        widgets = list(form.selected_label.keys())
+
+    # 選択されたすべての動画を削除
+    for widget in widgets:
+        # video_infoから対応するファイルパスを探す
+        delete_filepath = None
+        for file_path, info in form.video_info.items():
+            if info['label'] == widget:
+                delete_filepath = file_path
+                break
+        
+        if delete_filepath:
+            info = form.video_info[delete_filepath]
+            if info.get('stop_flag'):
+                info['stop_flag'].set()
+            if info.get('capture'):
+                info['capture'].release()
             widget.destroy()
 
-            del form.video_info[file_path]
-            form.update_widget(tk.DISABLED)
-            break
-    else:
-        messagebox.showwarning("警告", "削除する動画が選択されていません。")
-        form.update_widget(tk.NORMAL)
+            del form.video_info[delete_filepath]
+            
+            # 削除後、選択されたラベルリストからも削除
+            if widget in form.selected_label:
+                del form.selected_label[widget]
+    
+    if not form.video_info:
+        form.update_widget(tk.DISABLED)
+
+    form.change_size(form.set_size)
 
 def save_file(form, overwrite=False):
     """ファイルを保存する"""

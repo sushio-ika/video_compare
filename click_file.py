@@ -13,6 +13,7 @@ from menu_file import (
     open_file,
     new_file
 )
+from create_item_file import (create_widgets)
 
 def on_mousewheel(form, event):
     # 動画がある範囲のみスクロール可能にする
@@ -23,35 +24,60 @@ def on_mousewheel(form, event):
             form.canvas.yview_scroll(1, "units")
     form.canvas.yview_moveto(max(0, min(form.canvas.yview()[0], 1)))
 
+# ラベルに動画名表示関数
+def show_video_name(form, widget):
+    show_filepath = None
+    for file_path, info in form.video_info.items():
+        if info['label'] == widget:
+            show_filepath = file_path
+            break
+    
+    form.header.lbl_video_name+=show_filepath
+
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
         widget = event.widget
-        if widget in [info['label'] for info in form.video_info.values()]:#動画をクリックした場合
-            if ctrl_click:#Ctrlキーが押されている場合
-                if form.selected_label == widget:#すでに選択されている動画をクリックした場合
+
+        #動画をクリックした場合
+        if widget in [info['label'] for info in form.video_info.values()]:
+            
+            #Ctrlキーが押されている場合
+            if ctrl_click:
+
+                #すでに選択されている動画をクリックした場合
+                if widget in form.selected_label:
                     reset_video_highlight(form, widget)
-                    form.selected_label = None
-                else:#新たに選択された動画をクリックした場合
+                    del form.selected_label[widget]
+                
+                #新たに選択された動画をクリックした場合
+                else:
                     apply_image_highlight(form, widget)
-            else:#Ctrlキーが押されていない場合
+                    form.selected_label[widget]=True
+
+            else: # Ctrlキーが押されていない場合
+                # いったんすべての選択を解除
                 reset_all_highlights(form)
+                form.selected_label.clear()
+
+                # 現在選択中のラベルを保存
                 apply_image_highlight(form, widget)
-            form.selected_label = widget  # 現在選択中のラベルを保存
+                form.selected_label[widget]=True
 
-            # サイズ変更イベントをバインド
-            # widget.bind("<Button-1>", lambda event: rsz.resize_start(form, event))#左クリックでサイズ変更開始
-            # widget.bind("<B1-Motion>", lambda event: rsz.resize_video(form, event))#ドラッグでサイズ変更
-            # widget.bind("<ButtonRelease-1>", lambda event: rsz.resize_end(form, event))#左クリックを離したらサイズ変更終了
-
-            form.update_widget(tk.NORMAL)#動画再生コントロールを有効化
-
-        else:#動画以外をクリックした場合
-            if widget == form.footer.btn_rewind or widget == form.footer.btn_play_pause or widget == form.footer.btn_skip or widget == form.lbl_timestamp or widget == form.footer.btn_delete:
-                return
+            # 一つ以上選択されていたら動画再生コントロールを有効にする
+            if form.selected_label:
+                form.update_widget(tk.NORMAL)
             else:
                 form.update_widget(tk.DISABLED)
+
+
+        #動画以外をクリックした場合
+        else:
+
+            # フッターのアイテムは例外
+            if widget not in [form.footer.btn_rewind, form.footer.btn_play_pause, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete]:
+                form.update_widget(tk.DISABLED)
                 reset_all_highlights(form)
-                form.selected_label = None
+                form.selected_label.clear() # 全てクリア
 
 def reset_all_highlights(form):
     """全ての動画のハイライトをリセットする"""
@@ -65,8 +91,8 @@ def reset_video_highlight(form, label):
     label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
 
 def apply_image_highlight(form, label):
-    """選択された動画に青い枠線を適用する"""
-    label.config(bd=2, relief=tk.RAISED, highlightbackground="blue", highlightcolor="blue", highlightthickness=2)
+    """選択された動画に枠線を適用する"""
+    label.config(bd=2, relief=tk.RAISED, highlightbackground="#5FB7FF", highlightcolor="#5FB7FF", highlightthickness=2)
 
     
 def right_clickmenu(form, event):
@@ -81,7 +107,7 @@ def right_clickmenu(form, event):
     menu.add_command(label="コピー", command=lambda: copy_video(form))
     menu.add_command(label="貼り付け", command=lambda: paste_video(form))
     menu.add_command(label="切り取り", command=lambda: cut_video(form))
-    menu.add_command(label="削除", command=lambda: delete_video(form, widget=form.selected_label))
+    menu.add_command(label="削除", command=lambda: delete_video(form,  widgets=list(form.selected_label.keys())))
     menu.add_separator()
 
     save_menu = tk.Menu(menu, tearoff=0)
