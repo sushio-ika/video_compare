@@ -40,16 +40,11 @@ def show_video_name(form, widget):
 
 def double_left_click(form,event):
     widget=event.widget
+
+    # 動画をダブルクリックしたとき、表示サイズを最大にして、その動画の位置まで遷移する
     if widget in [info['label'] for info in form.video_info.values()]:
-        selected_label = list(form.selected_label.keys())[0]
-        file_path = ""
-        for path, info in form.video_info.items():
-            if info['label'] == selected_label:
-                file_path = path
-                break
-                
-        if file_path:
-            form.open_popup_video(file_path)
+        form.change_size(1)
+        form.canvas.yview_moveto(1)        
 
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
@@ -82,7 +77,7 @@ def left_click(form, event, ctrl_click):
 
             # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
             if len(form.selected_label)==1:
-                form.update_widget(tk.NORMAL)
+                form.change_control_mode(tk.NORMAL)
 
                 selected_label = list(form.selected_label.keys())[0]
                 file_path = ""
@@ -95,7 +90,7 @@ def left_click(form, event, ctrl_click):
                 file_name = os.path.basename(file_path)
                 form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
             else:
-                form.update_widget(tk.DISABLED)
+                form.change_control_mode(tk.DISABLED)
 
                 if len(form.selected_label)>1:
                     form.header.lbl_video_name.config(text="選択動画： *")
@@ -108,7 +103,7 @@ def left_click(form, event, ctrl_click):
 
             # フッターのアイテムは例外
             if widget not in [form.footer.btn_rewind, form.footer.btn_play_pause, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete]:
-                form.update_widget(tk.DISABLED)
+                form.change_control_mode(tk.DISABLED)
                 reset_all_highlights(form)
                 form.selected_label.clear() # 全てクリア
                 form.header.lbl_video_name.config(text="選択動画： なし")

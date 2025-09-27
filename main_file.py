@@ -57,7 +57,8 @@ class main(TkinterDnD.Tk):
         form.bind("<MouseWheel>", lambda event: on_mousewheel(form, event))
         form.bind("<Double-Button-1>",lambda event: double_left_click(form,event))
 
-        form.update_widget(tk.DISABLED)
+        form.change_control_mode(tk.DISABLED)
+        form.change_widget_mode(tk.DISABLED)
         form.change_size(form.set_size)
 
         #ウィンドウを中央に配置
@@ -148,6 +149,7 @@ class main(TkinterDnD.Tk):
             img_tk = ImageTk.PhotoImage(img)
             form.update_label_image(video_label, img_tk)
 
+        form.change_widget_mode(tk.NORMAL)
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
@@ -189,12 +191,18 @@ class main(TkinterDnD.Tk):
         capture.release()
         cv2.destroyAllWindows()
 
-    def update_widget(form, state):
+    def change_control_mode(form, state):
         """動画再生コントロールの有効/無効を切り替える関数"""
         form.footer.btn_rewind.config(state=state)
         form.footer.btn_play_pause.config(state=state)
         form.footer.btn_skip.config(state=state)
         form.lbl_timestamp.config(state=state)
+        
+    def change_widget_mode(form,state):
+        form.header.lbl_video_name.config(state=state)
+        form.header.btn_size_minus.config(state=state)
+        form.header.btn_size_plus.config(state=state)
+
 
     def update_label_image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""

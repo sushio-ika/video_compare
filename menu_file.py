@@ -66,7 +66,8 @@ def delete_video(form, widgets=None):
                 del form.selected_label[widget]
     
     if not form.video_info:
-        form.update_widget(tk.DISABLED)
+        form.change_control_mode(tk.DISABLED)
+        form.change_widget_mode(tk.DISABLED)
 
     form.change_size(form.set_size)
 
