@@ -8,7 +8,7 @@ from tkinterdnd2 import TkinterDnD
 import time
 
 from menu_file import (delete_video)
-from click_file import (left_click, right_clickmenu, on_mousewheel)
+from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
 
 #定数
@@ -55,6 +55,7 @@ class main(TkinterDnD.Tk):
         form.bind("<Button-1>", lambda event: left_click(form, event, False))
         form.bind("<Control-Button-1>", lambda event: left_click(form, event, True))
         form.bind("<MouseWheel>", lambda event: on_mousewheel(form, event))
+        form.bind("<Double-Button-1>",lambda event: double_left_click(form,event))
 
         form.update_widget(tk.DISABLED)
         form.change_size(form.set_size)
@@ -78,49 +79,11 @@ class main(TkinterDnD.Tk):
         """動画の再生/一時停止を切り替える"""
         form.paused = not form.paused
         if form.paused:
-            create_widgets.btn_play_pause.config(text="▶")
+            form.btn_play_pause.config(text="▶")
         else:
-            create_widgets.btn_play_pause.config(text="⏸")
+            form.btn_play_pause.config(text="⏸")
             form.update()
 
-    def update(form):
-        if not form.paused:
-            start_time = time.time()
-            ret, frame = form.vid.read()
-            if ret:
-                form.photo = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
-                form.canvas.config(width=form.vid.get(cv2.CAP_PROP_FRAME_WIDTH), height=form.vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                form.canvas.create_image(0, 0, image=form.photo, anchor=tk.NW)
-
-                current_frame = int(form.vid.get(cv2.CAP_PROP_POS_FRAMES))
-                total_frames = int(form.vid.get(cv2.CAP_PROP_FRAME_COUNT))
-                create_widgets.progress_bar["value"] = (current_frame / total_frames) * 100
-
-                current_time = int(form.vid.get(cv2.CAP_PROP_POS_MSEC) / 1000)
-                total_time = int(total_frames / form.vid.get(cv2.CAP_PROP_FPS))
-
-                current_time_str = form.format_time(current_time)
-                total_time_str = form.format_time(total_time)
-                create_widgets.lbl_timestamp.config(text=f"{current_time_str}/{total_time_str}")
-                
-                fps = form.vid.get(cv2.CAP_PROP_FPS)
-                delay = int(1000 / fps)
-                elapsed = int((time.time() - start_time) * 1000)
-                delay = max(1, delay - elapsed)
-                form.window.after(delay, form.update)
-            else:
-                form.toggle_play()
-        else:
-            create_widgets.btn_play_pause.config(text="▶")
-
-    def format_time(form, seconds):
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        seconds = seconds % 60
-        if hours > 0:
-            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        else:
-            return f"{minutes:02d}:{seconds:02d}"
         
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
@@ -152,7 +115,7 @@ class main(TkinterDnD.Tk):
             
         #動画表示用のラベルを作成
         video_label = tk.Label(form.video_frame, width=WINDOW_MAX_SIZE // form.set_size - 10, height=int((WINDOW_MAX_SIZE // form.set_size - 10) * 9 / 16))
-         # 追加前にvideo_infoへ一時追加
+        # 追加前にvideo_infoへ一時追加
         temp_count = len(form.video_info)  # 追加前の数
         col = temp_count % form.set_size
         row = temp_count // form.set_size
@@ -184,7 +147,6 @@ class main(TkinterDnD.Tk):
             img = Image.fromarray(frame_rgb)
             img_tk = ImageTk.PhotoImage(img)
             form.update_label_image(video_label, img_tk)
-
 
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
@@ -233,7 +195,6 @@ class main(TkinterDnD.Tk):
         form.footer.btn_play_pause.config(state=state)
         form.footer.btn_skip.config(state=state)
         form.lbl_timestamp.config(state=state)
-        form.footer.btn_delete.config(state=state)
 
     def update_label_image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""

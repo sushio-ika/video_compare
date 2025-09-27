@@ -39,6 +39,9 @@ def delete_video(form, widgets=None):
     if widgets is None:
         widgets = list(form.selected_label.keys())
 
+    if not widgets:
+        messagebox.showerror("エラー","削除する動画を選択してください")
+
     # 選択されたすべての動画を削除
     for widget in widgets:
         # video_infoから対応するファイルパスを探す

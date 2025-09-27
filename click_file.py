@@ -1,5 +1,9 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk
+import os
+import cv2 as cv
+import numpy as np
+
 from menu_file import (
     show_how_to_use,
     show_settings,
@@ -34,6 +38,19 @@ def show_video_name(form, widget):
     
     form.header.lbl_video_name+=show_filepath
 
+def double_left_click(form,event):
+    widget=event.widget
+    if widget in [info['label'] for info in form.video_info.values()]:
+        selected_label = list(form.selected_label.keys())[0]
+        file_path = ""
+        for path, info in form.video_info.items():
+            if info['label'] == selected_label:
+                file_path = path
+                break
+                
+        if file_path:
+            form.open_popup_video(file_path)
+
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
         widget = event.widget
@@ -63,11 +80,27 @@ def left_click(form, event, ctrl_click):
                 apply_image_highlight(form, widget)
                 form.selected_label[widget]=True
 
-            # 一つ以上選択されていたら動画再生コントロールを有効にする
-            if form.selected_label:
+            # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
+            if len(form.selected_label)==1:
                 form.update_widget(tk.NORMAL)
+
+                selected_label = list(form.selected_label.keys())[0]
+                file_path = ""
+                for path, info in form.video_info.items():
+                    if info['label'] == selected_label:
+                        file_path = path
+                        break
+                
+                # ファイル名のみを抽出して表示
+                file_name = os.path.basename(file_path)
+                form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
             else:
                 form.update_widget(tk.DISABLED)
+
+                if len(form.selected_label)>1:
+                    form.header.lbl_video_name.config(text="選択動画： *")
+                else:
+                    form.header.lbl_video_name.config(text="選択動画： なし")
 
 
         #動画以外をクリックした場合
@@ -78,6 +111,7 @@ def left_click(form, event, ctrl_click):
                 form.update_widget(tk.DISABLED)
                 reset_all_highlights(form)
                 form.selected_label.clear() # 全てクリア
+                form.header.lbl_video_name.config(text="選択動画： なし")
 
 def reset_all_highlights(form):
     """全ての動画のハイライトをリセットする"""

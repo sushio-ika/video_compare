@@ -31,7 +31,7 @@ def create_widgets(form):
     form.header.btn_new.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
     # 選択中の動画名を表示するラベル
-    form.header.lbl_video_name=tk.Label(form.header,text="選択動画：",width=100 )
+    form.header.lbl_video_name=tk.Label(form.header,text="選択動画： なし", width=100, anchor="w")
     form.header.lbl_video_name.pack(side=tk.LEFT,padx=5,pady=5)
     form.header.lbl_video_name.config(bg="#FFFFFF",fg="#000000")
 
