@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
-from menu_file import(delete_video)
+from menu_file import(delete_video,new_file)
 
 def create_widgets(form):
     """UI部品の配置""" 
@@ -97,4 +97,3 @@ def create_widgets(form):
     def on_frame_configure(event):
         form.canvas.configure(scrollregion=form.canvas.bbox("all"))
     form.video_frame.bind("<Configure>", on_frame_configure)
-

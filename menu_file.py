@@ -6,21 +6,26 @@ def show_how_to_use(form):
     """使い方を表示"""
     messagebox.showinfo(
         "マルチリンクの使い方",
-        "1. 動画を選択するには、「動画を選択」ボタンをクリックします。\n"
-        "2. 動画が再生されます。左クリックで動画を選択し、右クリックでメニューを表示します。\n"
+        "1. 動画を追加するには、ドラッグ&ドロップまたは右下の「追加」ボタンを使用します。\n"
+        "2. 左下の再生コントロールで動画を操作します。\n"
+        "3. 動画をダブルクリックすると動画が拡大表示されます。"
     )
 
+def show_version(form):
+    messagebox.showinfo("バージョン情報",
+                        "バージョン\tver.0.0.0\n"
+                        "更新日\t2025/09/27")
 def show_settings(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")
 
 def put_one_back(form):
     """操作を1つ戻す"""
-    form.edit_undo()
+    messagebox.showinfo("情報", "未実装")
 
 def put_one_forward(form):
     """操作を1つ進める"""
-    form.edit_redo()
+    messagebox.showinfo("情報", "未実装")
 
 def copy_video(form):
     """動画をコピーする"""
@@ -98,4 +103,4 @@ def open_file(form):
 def new_file(form):
     """新しいファイルを作成する"""
     form.current_file = None
-    form.title("新規ファイル")
+    form.title("マルチリンク -新規ファイル-")

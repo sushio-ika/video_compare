@@ -39,7 +39,7 @@ class main(TkinterDnD.Tk):
         form.stop_flag = None
 
         # ウィンドウの基本設定
-        form.title("マルチリンク")
+        form.title("マルチリンク -新規ファイル-")
         form.geometry(f"{WINDOW_MAX_SIZE}x{WINDOW_MIN_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.resizable(True, True)
@@ -150,6 +150,7 @@ class main(TkinterDnD.Tk):
             form.update_label_image(video_label, img_tk)
 
         form.change_widget_mode(tk.NORMAL)
+        
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
@@ -236,9 +237,37 @@ class main(TkinterDnD.Tk):
                 img = Image.fromarray(frame_rgb)
                 img_tk = ImageTk.PhotoImage(img)
                 form.update_label_image(label, img_tk)
+        
+        form.scrollbar_set(0.0) # 最大サイズから画面サイズを小さくした際、画面外に置いて行かれないようにするため
+        form.update_idletasks()
 
+    def scrollbar_set(form, point):
+        # 任意の位置までスクロールバーを移動
+        form.canvas.yview_moveto(point)
 
-
+    def get_video_index(form):
+        """現在選択されている単一の動画のリスト内のインデックス（0から始まる）を返す"""
+        
+        if len(form.selected_label) != 1:
+            return -1 
+        
+        selected_label = list(form.selected_label.keys())[0]
+        
+        selected_file_path = None
+        for path, info in form.video_info.items():
+            if info['label'] == selected_label:
+                selected_file_path = path
+                break
+        
+        if selected_file_path:
+            video_paths = list(form.video_info.keys())
+            return video_paths.index(selected_file_path)
+        
+        return -1 # 見つからなかった場合
+    
+    def get_video_num(form):
+        return len(form.video_info)
+    
 if __name__ == '__main__':
     app = main()
     app.mainloop()

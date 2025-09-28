@@ -6,6 +6,7 @@ import numpy as np
 
 from menu_file import (
     show_how_to_use,
+    show_version,
     show_settings,
     put_one_back,
     put_one_forward,
@@ -28,23 +29,19 @@ def on_mousewheel(form, event):
             form.canvas.yview_scroll(1, "units")
     form.canvas.yview_moveto(max(0, min(form.canvas.yview()[0], 1)))
 
-# ラベルに動画名表示関数
-def show_video_name(form, widget):
-    show_filepath = None
-    for file_path, info in form.video_info.items():
-        if info['label'] == widget:
-            show_filepath = file_path
-            break
-    
-    form.header.lbl_video_name+=show_filepath
-
 def double_left_click(form,event):
     widget=event.widget
 
     # 動画をダブルクリックしたとき、表示サイズを最大にして、その動画の位置まで遷移する
     if widget in [info['label'] for info in form.video_info.values()]:
-        form.change_size(1)
-        form.canvas.yview_moveto(1)        
+        if form.get_video_index()==-1:
+            messagebox.showerror("エラー","複数の動画が選択されています。") # -1が返ってくるため
+        elif form.get_video_num()==0:
+            messagebox.showerror("エラー","動画がまだありません。") # 念のため
+        else:
+            form.change_size(1)
+            point=form.get_video_index() / form.get_video_num()
+            form.scrollbar_set(point)
 
 def left_click(form, event, ctrl_click):
         """マウスの左クリックを処理する"""
@@ -63,7 +60,7 @@ def left_click(form, event, ctrl_click):
                 
                 #新たに選択された動画をクリックした場合
                 else:
-                    apply_image_highlight(form, widget)
+                    set_highlight(form, widget)
                     form.selected_label[widget]=True
 
             else: # Ctrlキーが押されていない場合
@@ -72,7 +69,7 @@ def left_click(form, event, ctrl_click):
                 form.selected_label.clear()
 
                 # 現在選択中のラベルを保存
-                apply_image_highlight(form, widget)
+                set_highlight(form, widget)
                 form.selected_label[widget]=True
 
             # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
@@ -119,7 +116,7 @@ def reset_video_highlight(form, label):
     label.config(bd=0, relief=tk.FLAT)
     label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
 
-def apply_image_highlight(form, label):
+def set_highlight(form, label):
     """選択された動画に枠線を適用する"""
     label.config(bd=2, relief=tk.RAISED, highlightbackground="#5FB7FF", highlightcolor="#5FB7FF", highlightthickness=2)
 
@@ -128,6 +125,7 @@ def right_clickmenu(form, event):
     """右クリックメニューを表示する関数"""
     menu = tk.Menu(form, tearoff=0)
     menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
+    menu.add_command(label="バージョン情報", command=lambda: show_version(form))
     menu.add_command(label="設定", command=lambda: show_settings(form))
     menu.add_separator()
     menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
