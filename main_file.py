@@ -192,12 +192,35 @@ class main(TkinterDnD.Tk):
         capture.release()
         cv2.destroyAllWindows()
 
+    def get_video_time_info(form, file_path):
+        """指定された動画の再生時間情報を返す"""
+        if file_path not in form.video_info:
+            return "00:00/00:00"
+
+        capture = form.video_info[file_path]['capture']
+        
+        # 総フレーム数とFPSを取得
+        frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = capture.get(cv2.CAP_PROP_FPS)
+
+        if fps == 0:
+            return "00:00/00:00"
+
+        # 総再生時間（秒）を計算
+        total_time = frames / fps
+        
+        total_minutes = int(total_time // 60)
+        total_seconds = int(total_time % 60)
+        
+        return f"00:00/{total_minutes:02d}:{total_seconds:02d}"
+    
     def change_control_mode(form, state):
         """動画再生コントロールの有効/無効を切り替える関数"""
         form.footer.btn_rewind.config(state=state)
         form.footer.btn_play_pause.config(state=state)
         form.footer.btn_skip.config(state=state)
         form.lbl_timestamp.config(state=state)
+        form.lbl_timestamp.config(text="00:00/00:00")
         
     def change_widget_mode(form,state):
         form.header.lbl_video_name.config(state=state)
@@ -217,7 +240,10 @@ class main(TkinterDnD.Tk):
         form.set_size = s
 
         # 新しい幅を計算
-        new_width = WINDOW_MAX_SIZE // form.set_size - 10  # パディングを考慮
+        if s==1:
+            new_width = WINDOW_MAX_SIZE // form.set_size - 40  # パディングを考慮
+        else:
+            new_width = WINDOW_MAX_SIZE // form.set_size - 5  # パディングを考慮
         new_height = int(new_width * 9 / 16)  # 16:9の比率
 
         # すべての動画ラベルのサイズを変更
@@ -238,6 +264,18 @@ class main(TkinterDnD.Tk):
                 img_tk = ImageTk.PhotoImage(img)
                 form.update_label_image(label, img_tk)
         
+        # 画面表示サイズが最大または最小のとき、それぞれのボタンを無効化
+        if s>=5:
+            form.header.btn_size_minus.config(state=tk.DISABLED)
+            form.header.btn_size_plus.config(state=tk.NORMAL)
+        elif s<=1:
+            form.header.btn_size_minus.config(state=tk.NORMAL)
+            form.header.btn_size_plus.config(state=tk.DISABLED)
+        else:
+            form.header.btn_size_minus.config(state=tk.NORMAL)
+            form.header.btn_size_plus.config(state=tk.NORMAL)
+
+        
         form.scrollbar_set(0.0) # 最大サイズから画面サイズを小さくした際、画面外に置いて行かれないようにするため
         form.update_idletasks()
 
@@ -251,14 +289,8 @@ class main(TkinterDnD.Tk):
         if len(form.selected_label) != 1:
             return -1 
         
-        selected_label = list(form.selected_label.keys())[0]
-        
-        selected_file_path = None
-        for path, info in form.video_info.items():
-            if info['label'] == selected_label:
-                selected_file_path = path
-                break
-        
+        selected_file_path=form.get_file_path()
+
         if selected_file_path:
             video_paths = list(form.video_info.keys())
             return video_paths.index(selected_file_path)
@@ -267,6 +299,15 @@ class main(TkinterDnD.Tk):
     
     def get_video_num(form):
         return len(form.video_info)
+    
+    def get_file_path(form):
+        selected_label = list(form.selected_label.keys())[0]
+        file_path = ""
+        for path, info in form.video_info.items():
+            if info['label'] == selected_label:
+                file_path = path
+                break
+        return file_path
     
 if __name__ == '__main__':
     app = main()

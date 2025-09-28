@@ -75,17 +75,12 @@ def left_click(form, event, ctrl_click):
             # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
             if len(form.selected_label)==1:
                 form.change_control_mode(tk.NORMAL)
+                file_path=form.get_file_path()
 
-                selected_label = list(form.selected_label.keys())[0]
-                file_path = ""
-                for path, info in form.video_info.items():
-                    if info['label'] == selected_label:
-                        file_path = path
-                        break
-                
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(file_path)
                 form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
+                form.lbl_timestamp.config(text=form.get_video_time_info(file_path))
             else:
                 form.change_control_mode(tk.DISABLED)
 
@@ -98,8 +93,8 @@ def left_click(form, event, ctrl_click):
         #動画以外をクリックした場合
         else:
 
-            # フッターのアイテムは例外
-            if widget not in [form.footer.btn_rewind, form.footer.btn_play_pause, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete]:
+            # フッターとヘッダー（一部）のアイテムは例外
+            if widget not in [form.footer.btn_rewind, form.footer.btn_play_pause, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name]:
                 form.change_control_mode(tk.DISABLED)
                 reset_all_highlights(form)
                 form.selected_label.clear() # 全てクリア
