@@ -42,8 +42,7 @@ class main(TkinterDnD.Tk):
         form.title("マルチリンク -新規ファイル-")
         form.geometry(f"{WINDOW_MAX_SIZE}x{WINDOW_MIN_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
-        form.resizable(True, True)
-        form.minsize(WINDOW_MAX_SIZE, WINDOW_MIN_SIZE)
+        form.resizable(False, False)
 
         # ドラッグ＆ドロップの設定
         form.drop_target_register(1, 'DND_Files')
@@ -223,6 +222,7 @@ class main(TkinterDnD.Tk):
         form.lbl_timestamp.config(text="00:00/00:00")
         
     def change_widget_mode(form,state):
+        form.header.lbl_video_name.config(text="選択動画： なし")
         form.header.lbl_video_name.config(state=state)
         form.header.btn_size_minus.config(state=state)
         form.header.btn_size_plus.config(state=state)

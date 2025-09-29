@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-
+import os
 
 def show_how_to_use(form):
     """使い方を表示"""
@@ -13,8 +13,8 @@ def show_how_to_use(form):
 
 def show_version(form):
     messagebox.showinfo("バージョン情報",
-                        "バージョン\tver.0.0.0\n"
-                        "更新日\t2025/09/27")
+                        "バージョン\tver.0.0.1\n"
+                        "更新日\t2025/09/28")
 def show_settings(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")
@@ -29,15 +29,49 @@ def put_one_forward(form):
 
 def copy_video(form):
     """動画をコピーする"""
-    form.event_generate("<<Copy>>")
+    if form.selected_label:
+        form.change_control_mode(tk.NORMAL)
+        file_path=form.get_file_path()
+        try:
+            form.clipboard_clear()
+            form.clipboard_append(file_path)
+        
+            print(f"クリップボードにコピーされました: {file_path}")
+        
+        except tk.TclError as e:
+            print(f"クリップボードへのアクセスエラー: {e}")
 
 def paste_video(form):
     """動画を貼り付ける"""
-    form.event_generate("<<Paste>>")
+    try:
+        # 1. クリップボードの内容を取得
+        file_path = form.clipboard_get()
+        
+        if file_path:
+            print(f"クリップボードから取得したテキスト: {file_path}")
+            form.add_video(file_path)
+        else:
+            print("クリップボードが空です。")
+            return None
+            
+    except tk.TclError:
+        print("クリップボードから有効なテキストを取得できませんでした。")
+        return None
 
 def cut_video(form):
     """動画を切り取る"""
-    form.event_generate("<<Cut>>")
+    if form.selected_label:
+        form.change_control_mode(tk.NORMAL)
+        file_path=form.get_file_path()
+        try:
+            form.clipboard_clear()
+            form.clipboard_append(file_path)
+            delete_video(form, widgets=list(form.selected_label.keys()))
+        
+            print(f"クリップボードにコピーされました: {file_path}")
+        
+        except tk.TclError as e:
+            print(f"クリップボードへのアクセスエラー: {e}")
 
 def delete_video(form, widgets=None):
     """現在選択している動画を削除する"""
@@ -71,10 +105,11 @@ def delete_video(form, widgets=None):
                 del form.selected_label[widget]
     
     if not form.video_info:
+        form.change_size(form.set_size)
         form.change_control_mode(tk.DISABLED)
         form.change_widget_mode(tk.DISABLED)
 
-    form.change_size(form.set_size)
+    
 
 def save_file(form, overwrite=False):
     """ファイルを保存する"""
@@ -104,3 +139,20 @@ def new_file(form):
     """新しいファイルを作成する"""
     form.current_file = None
     form.title("マルチリンク -新規ファイル-")
+
+def copy_video_name(form):
+    if len(form.selected_label)==1:
+        form.change_control_mode(tk.NORMAL)
+        file_path=form.get_file_path()
+
+        file_name = os.path.basename(file_path)
+
+        try:
+            form.clipboard_clear()
+            form.clipboard_append(file_name)
+        
+            print(f"クリップボードにコピーされました: {file_name}")
+        
+        except tk.TclError as e:
+            print(f"クリップボードへのアクセスエラー: {e}")
+    

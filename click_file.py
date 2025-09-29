@@ -16,7 +16,8 @@ from menu_file import (
     delete_video,
     save_file,
     open_file,
-    new_file
+    new_file,
+    copy_video_name
 )
 from create_item_file import (create_widgets)
 
@@ -118,32 +119,47 @@ def set_highlight(form, label):
     
 def right_clickmenu(form, event):
     """右クリックメニューを表示する関数"""
-    menu = tk.Menu(form, tearoff=0)
-    menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
-    menu.add_command(label="バージョン情報", command=lambda: show_version(form))
-    menu.add_command(label="設定", command=lambda: show_settings(form))
-    menu.add_separator()
-    menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
-    menu.add_command(label="一つ進める", command=lambda: put_one_forward(form))
-    menu.add_separator()
-    menu.add_command(label="コピー", command=lambda: copy_video(form))
-    menu.add_command(label="貼り付け", command=lambda: paste_video(form))
-    menu.add_command(label="切り取り", command=lambda: cut_video(form))
-    menu.add_command(label="削除", command=lambda: delete_video(form,  widgets=list(form.selected_label.keys())))
-    menu.add_separator()
+    widget=event.widget
 
-    save_menu = tk.Menu(menu, tearoff=0)
-    menu.add_cascade(label="保存", menu=save_menu)
-    save_menu.add_command(label="上書き保存", command=lambda: save_file(form, overwrite=True))
-    save_menu.add_command(label="名前を付けて保存", command=lambda: save_file(form, overwrite=False))
+    if widget in form.selected_label:
+        menu=tk.Menu(form,tearoff=0)
+        menu.add_command(label="ジャンル", command=messagebox.showinfo("",""))
+        menu.add_separator()
+        menu.add_command(label="コピー", command=lambda: copy_video(form))
+        menu.add_command(label="切り取り", command=lambda: cut_video(form))
+        menu.add_command(label="削除", command=lambda: delete_video(form, widgets=list(form.selected_label.keys())))
+        menu.post(event.x_root, event.y_root)
+    elif widget in [form.header.lbl_video_name] and form.header.lbl_video_name.cget("state") == tk.NORMAL:
+        menu=tk.Menu(form,tearoff=0)
+        menu.add_command(label="コピー", command=lambda: copy_video_name(form))
+        menu.post(event.x_root, event.y_root)
+    else:
+        menu = tk.Menu(form, tearoff=0)
+        menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
+        menu.add_command(label="バージョン情報", command=lambda: show_version(form))
+        menu.add_command(label="設定", command=lambda: show_settings(form))
+        menu.add_separator()
+        menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
+        menu.add_command(label="一つ進める", command=lambda: put_one_forward(form))
+        menu.add_separator()
+        menu.add_command(label="コピー", command=lambda: copy_video(form))
+        menu.add_command(label="貼り付け", command=lambda: paste_video(form))
+        menu.add_command(label="切り取り", command=lambda: cut_video(form))
+        menu.add_command(label="削除", command=lambda: delete_video(form,  widgets=list(form.selected_label.keys())))
+        menu.add_separator()
 
-    open_menu = tk.Menu(menu, tearoff=0)
+        save_menu = tk.Menu(menu, tearoff=0)
+        menu.add_cascade(label="保存", menu=save_menu)
+        save_menu.add_command(label="上書き保存", command=lambda: save_file(form, overwrite=True))    
+        save_menu.add_command(label="名前を付けて保存", command=lambda: save_file(form, overwrite=False))
+
+        open_menu = tk.Menu(menu, tearoff=0)
     
-    menu.add_cascade(label="開く", menu=open_menu)
-    open_menu.add_command(label="ファイルを開く", command=lambda: open_file(form))
-    open_menu.add_command(label="動画を開く", command=form.select_video)
-    menu.add_command(label="新規作成", command=lambda: new_file(form))
-    menu.add_separator()
-    menu.add_command(label="終了", command=form.quit)
+        menu.add_cascade(label="開く", menu=open_menu)
+        open_menu.add_command(label="ファイルを開く", command=lambda: open_file(form))
+        open_menu.add_command(label="動画を開く", command=form.select_video)
+        menu.add_command(label="新規作成", command=lambda: new_file(form))
+        menu.add_separator()
+        menu.add_command(label="終了", command=form.quit)
 
-    menu.post(event.x_root, event.y_root)
+        menu.post(event.x_root, event.y_root)
