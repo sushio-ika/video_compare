@@ -5,15 +5,13 @@ from PIL import Image, ImageTk
 import threading
 import os
 from tkinterdnd2 import TkinterDnD
-import time
 
-from menu_file import (delete_video)
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
 
 #定数
-WINDOW_MAX_SIZE=1280
-WINDOW_MIN_SIZE=900
+WINDOW_WIDTH_SIZE=1280
+WINDOW_HEIGHT_SIZE=900
 PICTURE_WIDTH = 400  #動画表示の横幅を固定
 
 #DPI設定（Windowsでの高解像度対応）
@@ -40,7 +38,7 @@ class main(TkinterDnD.Tk):
 
         # ウィンドウの基本設定
         form.title("マルチリンク -新規ファイル-")
-        form.geometry(f"{WINDOW_MAX_SIZE}x{WINDOW_MIN_SIZE}")
+        form.geometry(f"{WINDOW_WIDTH_SIZE}x{WINDOW_HEIGHT_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.resizable(False, False)
 
@@ -94,12 +92,14 @@ class main(TkinterDnD.Tk):
 
     def select_video(form):
         """ファイルダイアログから動画を選択する関数"""
-        filepath = filedialog.askopenfilename(
+        filepaths = filedialog.askopenfilename(
             title="動画を選択してください",
-            filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")]
+            filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")],
+            multiple=True
         )
-        if filepath:
-            form.add_video(filepath)
+        for file_path in filepaths:
+            if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                form.add_video(file_path)
     
     def add_video(form, file_path):
         """動画をアプリに追加し、再生を準備する関数"""
@@ -114,7 +114,7 @@ class main(TkinterDnD.Tk):
             return
             
         #動画表示用のラベルを作成
-        video_label = tk.Label(form.video_frame, width=WINDOW_MAX_SIZE // form.set_size - 10, height=int((WINDOW_MAX_SIZE // form.set_size - 10) * 9 / 16))
+        video_label = tk.Label(form.video_frame, width=WINDOW_WIDTH_SIZE // form.set_size - 10, height=int((WINDOW_WIDTH_SIZE // form.set_size - 10) * 9 / 16))
         # 追加前にvideo_infoへ一時追加
         temp_count = len(form.video_info)  # 追加前の数
         col = temp_count % form.set_size
@@ -140,7 +140,7 @@ class main(TkinterDnD.Tk):
             form.video_info[file_path]['last_frame'] = frame
             frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
-            new_width = WINDOW_MAX_SIZE // form.set_size - 10  # パディングを考慮
+            new_width = WINDOW_WIDTH_SIZE // form.set_size - 10  # パディングを考慮
             new_height = int(new_width * aspect_ratio)
             resized_frame = cv2.resize(frame, (new_width, new_height))
             frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
@@ -241,9 +241,9 @@ class main(TkinterDnD.Tk):
 
         # 新しい幅を計算
         if s==1:
-            new_width = WINDOW_MAX_SIZE // form.set_size - 40  # パディングを考慮
+            new_width = WINDOW_WIDTH_SIZE // form.set_size - 40  # パディングを考慮
         else:
-            new_width = WINDOW_MAX_SIZE // form.set_size - 5  # パディングを考慮
+            new_width = WINDOW_WIDTH_SIZE // form.set_size - 5  # パディングを考慮
         new_height = int(new_width * 9 / 16)  # 16:9の比率
 
         # すべての動画ラベルのサイズを変更
@@ -308,6 +308,14 @@ class main(TkinterDnD.Tk):
                 file_path = path
                 break
         return file_path
+    
+    def check_genre(form):
+        # ここに遷移はしてる
+        if form.genre_menu.add_checkbutton==True:
+            # ジャンル「歩き」の動画に絞る
+            print("walk")# ここまできてない
+        else:
+            return
     
 if __name__ == '__main__':
     app = main()

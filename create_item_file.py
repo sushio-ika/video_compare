@@ -44,9 +44,38 @@ def create_widgets(form):
     form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
     form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    # ジャンルを設定する
-    form.header.genre=tk.Checkbutton(form.header,text="ジャンル",width=30)
-    form.header.genre.pack(side=tk.RIGHT, padx=5, pady=5)
+    # ジャンルを選択するメニュー
+    form.var_walk = tk.BooleanVar(form)
+    form.var_run = tk.BooleanVar(form)
+    form.var_up = tk.BooleanVar(form)
+    form.var_throw = tk.BooleanVar(form)
+    form.var_face = tk.BooleanVar(form)
+    form.var_action = tk.BooleanVar(form)
+
+    form.menubar=Menu(form)
+    form.genre_menu = Menu(form, tearoff=0) # tearoff=0で、メニューの破線をなくす
+    form.genre_menu.add_checkbutton(label="歩き", variable=form.var_walk, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label="走り", variable=form.var_run, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label="持ち上げる", variable=form.var_up, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label="投げる", variable=form.var_throw, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label="表情", variable=form.var_face, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label="アクション", variable=form.var_action, command=lambda: form.check_genre())
+    form.genre_menu.add_command(label="+(追加)", command=lambda: add_menu())
+
+    def show_menu():
+        try:
+            x_pos = form.header.genre_btn.winfo_rootx()
+            y_pos = form.header.genre_btn.winfo_rooty() + form.header.genre_btn.winfo_height()
+            form.genre_menu.tk_popup(x_pos, y_pos) 
+        finally:
+            form.genre_menu.grab_release()
+    def add_menu():
+        # ジャンルメニューに新しい候補を追加
+        messagebox.showinfo("情報","なにもないよ")
+
+    # ボタンを作成
+    form.header.genre_btn = tk.Button(form.header, text="ジャンル", command=lambda: show_menu())
+    form.header.genre_btn.pack(side=tk.LEFT,padx=5, pady=5)
 
     # 動画再生コントロールを設置するフッターを作成
     form.footer = tk.Frame(form)
