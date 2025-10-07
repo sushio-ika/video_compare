@@ -35,6 +35,7 @@ class main(TkinterDnD.Tk):
 
         form.thread = None
         form.stop_flag = None
+        form.paused = True  # 動画の再生/一時停止状態
 
         # ウィンドウの基本設定
         form.title("マルチリンク -新規ファイル-")
@@ -54,9 +55,9 @@ class main(TkinterDnD.Tk):
         form.bind("<MouseWheel>", lambda event: on_mousewheel(form, event))
         form.bind("<Double-Button-1>",lambda event: double_left_click(form,event))
 
+        form.change_size(form.set_size)
         form.change_control_mode(tk.DISABLED)
         form.change_widget_mode(tk.DISABLED)
-        form.change_size(form.set_size)
 
         #ウィンドウを中央に配置
         form.update_idletasks()
@@ -69,20 +70,151 @@ class main(TkinterDnD.Tk):
 
     def back(form):
         """5秒巻き戻す"""
+        # 念のため
+        if len(form.selected_label) != 1:
+            messagebox.showinfo("情報", "単一の動画を選択してください。")
+            return
 
-    def front(form):
+        # 選択中の動画から、ファイルパスを取得
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+
+        info = form.video_info[selected_file_path]
+        capture = info['capture']
+        video_label = info['label']
+        stop_flag = info['stop_flag']
+
+        # 5秒巻き戻し
+        frames_to_advance = int(capture.get(cv2.CAP_PROP_FPS) * -5)
+        form.control_video(capture, video_label, stop_flag, selected_file_path, frames_to_advance)
+    
+    def frame_back(form):
+        """1フレーム巻き戻す"""
+        # 念のため
+        if len(form.selected_label) != 1:
+            messagebox.showinfo("情報", "単一の動画を選択してください。")
+            return
+
+        # 選択中の動画から、ファイルパスを取得
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+
+        info = form.video_info[selected_file_path]
+        capture = info['capture']
+        video_label = info['label']
+        stop_flag = info['stop_flag']
+
+        # 1フレーム巻き戻し
+        form.control_video(capture, video_label, stop_flag, selected_file_path, -1)
+
+    def frame_forward(form):
+        """1フレーム早送りする"""
+        # 念のため
+        if len(form.selected_label) != 1:
+            messagebox.showinfo("情報", "単一の動画を選択してください。")
+            return
+
+        # 選択中の動画から、ファイルパスを取得
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+
+        info = form.video_info[selected_file_path]
+        capture = info['capture']
+        video_label = info['label']
+        stop_flag = info['stop_flag']
+
+        # 1フレーム早送り
+        form.control_video(capture, video_label, stop_flag, selected_file_path, 1)
+
+    def forward(form):
         """5秒早送りする"""
+        # 念のため
+        if len(form.selected_label) != 1:
+            messagebox.showinfo("情報", "単一の動画を選択してください。")
+            return
 
+        # 選択中の動画から、ファイルパスを取得
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+
+        info = form.video_info[selected_file_path]
+        capture = info['capture']
+        video_label = info['label']
+        stop_flag = info['stop_flag']
+
+        # 5秒早送り
+        frames_to_advance = int(capture.get(cv2.CAP_PROP_FPS) * 5)
+        form.control_video(capture, video_label, stop_flag, selected_file_path, frames_to_advance)
+
+    def control_video(form, capture, video_label, stop_flag, file_path, frames):
+        """動画を指定されたフレーム分シークする関数"""
+        """正の値で早送り、負の値で巻き戻し"""
+        return
+        
     def toggle_play(form):
         """動画の再生/一時停止を切り替える"""
-        form.paused = not form.paused
-        if form.paused:
-            form.btn_play_pause.config(text="▶")
-        else:
-            form.btn_play_pause.config(text="⏸")
-            form.update()
-
+        # 念のため
+        if len(form.selected_label) != 1:
+            messagebox.showinfo("情報", "単一の動画を選択してください。")
+            return
         
+        # 選択中の動画から、ファイルパスを取得
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+        
+        info = form.video_info[selected_file_path]
+        capture = info['capture']
+        video_label = info['label']
+        stop_flag = info['stop_flag']
+
+        if form.paused:
+            # 再生中でない場合、再生を開始
+            form.paused = False
+            form.footer.btn_play_pause.config(text="⏸")
+            if info['thread'] is None or not info['thread'].is_alive():
+                stop_flag.clear()
+                thread = threading.Thread(target=form.play_video, args=(capture, video_label, stop_flag, selected_file_path))
+                thread.start()
+                info['thread'] = thread
+        else:
+            # 再生中の場合、一時停止
+            form.paused = True
+            form.footer.btn_play_pause.config(text="▶")
+            form.stop_video()
+
+    def update_lbl_timestamp(form, file_path):
+        """選択中の動画のタイムスタンプを更新する関数"""
+        if file_path not in form.video_info:
+            form.lbl_timestamp.config(text="00:00/00:00")
+            return
+
+        capture = form.video_info[file_path]['capture']
+        
+        # 現在のフレーム位置と総フレーム数、FPSを取得
+        current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+        total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = capture.get(cv2.CAP_PROP_FPS)
+
+        if fps == 0:
+            form.lbl_timestamp.config(text="00:00/00:00")
+            return
+
+        # 現在の再生時間（秒）を計算
+        current_time = current_frame / fps
+        total_time = total_frames / fps
+        
+        current_minutes = int(current_time // 60)
+        current_seconds = int(current_time % 60)
+        total_minutes = int(total_time // 60)
+        total_seconds = int(total_time % 60)
+        
+        form.lbl_timestamp.config(text=f"{current_minutes:02d}:{current_seconds:02d}/{total_minutes:02d}:{total_seconds:02d}")
+
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
         files = form.tk.splitlist(event.data)
@@ -156,40 +288,66 @@ class main(TkinterDnD.Tk):
 
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
-        while capture.isOpened() and not stop_flag.is_set():
+        while not stop_flag.is_set():
             ret, frame = capture.read()
             if not ret:
-                break
-            form.video_info[file_path]['last_frame'] = frame  # 最後のフレームを保存
+                break  # 動画の終わりに達した場合、ループを終了
 
-            #動画のサイズを調整
-            label_width = max(50, min(80, video_label.winfo_width()))
-            label_height = max(50, video_label.winfo_height())
+            form.video_info[file_path]['last_frame'] = frame  # 最後に表示したフレームを保存
+
+            # フレームのリサイズ
             frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
-
-            # ラベルの幅を基準にアスペクト比を維持して高さを計算
-            new_width = max(50, min(800, int(video_label.winfo_width())))
+            new_width = WINDOW_WIDTH_SIZE // form.set_size - 10  # パディングを考慮
             new_height = int(new_width * aspect_ratio)
-
-            # ラベルの高さを超えないように調整（必要なら）
-            if new_height > label_height:
-                new_height = label_height
-                new_width = int(new_height / aspect_ratio)
-
             resized_frame = cv2.resize(frame, (new_width, new_height))
-            
+
+            # OpenCVのBGRからPILのRGBに変換
             frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame_rgb)
             img_tk = ImageTk.PhotoImage(img)
-            video_label.after(1, lambda: form.update_label_image(video_label, img_tk))
 
-            delay_ms = int(1000 / capture.get(cv2.CAP_PROP_FPS))
-            
-            cv2.waitKey(delay_ms)
+            # ラベルの画像を更新
+            form.update_label_image(video_label, img_tk)
 
-        capture.release()
-        cv2.destroyAllWindows()
+            # タイムスタンプを更新
+            form.update_lbl_timestamp(file_path)
+
+            # 再生速度を調整（FPSに基づく）
+            fps = capture.get(cv2.CAP_PROP_FPS)
+            if fps > 0:
+                delay = int(1000 / fps)
+                if stop_flag.wait(delay / 1000):
+                    break  # stop_flagがセットされた場合、ループを終了
+            else:
+                if stop_flag.wait(0.03):  # FPSが取得できない場合は約30fpsで更新
+                    break
+
+        form.paused = True
+        form.footer.btn_play_pause.config(text="▶")
+        stop_flag.set()
+        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 動画を最初に戻す
+        form.update_lbl_timestamp(file_path)  # タイムスタンプをリセット
+        
+    def stop_video(form):
+        """動画の再生を停止する関数"""
+        if len(form.selected_label) != 1:
+            return
+        
+        selected_file_path = form.get_file_path()
+        if not selected_file_path:
+            return
+        
+        info = form.video_info[selected_file_path]
+        stop_flag = info['stop_flag']
+        if stop_flag:
+            stop_flag.set()
+        
+        form.paused = True
+        form.footer.btn_play_pause.config(text="▶")
+        form.update_lbl_timestamp(selected_file_path)  # タイムスタンプをリセット
+        capture = info['capture']
+        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 動画を最初に戻す
 
     def get_video_time_info(form, file_path):
         """指定された動画の再生時間情報を返す"""
@@ -216,7 +374,9 @@ class main(TkinterDnD.Tk):
     def change_control_mode(form, state):
         """動画再生コントロールの有効/無効を切り替える関数"""
         form.footer.btn_rewind.config(state=state)
+        form.footer.btn_frame_back.config(state=state)
         form.footer.btn_play_pause.config(state=state)
+        form.footer.btn_frame_forward.config(state=state)
         form.footer.btn_skip.config(state=state)
         form.lbl_timestamp.config(state=state)
         form.lbl_timestamp.config(text="00:00/00:00")

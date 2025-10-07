@@ -95,11 +95,13 @@ def left_click(form, event, ctrl_click):
         else:
 
             # フッターとヘッダー（一部）のアイテムは例外
-            if widget not in [form.footer.btn_rewind, form.footer.btn_play_pause, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name]:
+            if widget not in [form.footer.btn_rewind, form.footer.btn_frame_back, form.footer.btn_play_pause, form.footer.btn_frame_forward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name]:
                 form.change_control_mode(tk.DISABLED)
                 reset_all_highlights(form)
                 form.selected_label.clear() # 全てクリア
                 form.header.lbl_video_name.config(text="選択動画： なし")
+                form.lbl_timestamp.config(text="00:00/00:00")
+                form.stop_video()
 
 def reset_all_highlights(form):
     """全ての動画のハイライトをリセットする"""

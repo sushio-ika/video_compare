@@ -70,8 +70,7 @@ def create_widgets(form):
         finally:
             form.genre_menu.grab_release()
     def add_menu():
-        # ジャンルメニューに新しい候補を追加
-        messagebox.showinfo("情報","なにもないよ")
+        return
 
     # ボタンを作成
     form.header.genre_btn = tk.Button(form.header, text="ジャンル", command=lambda: show_menu())
@@ -86,15 +85,23 @@ def create_widgets(form):
     form.footer.pack(pady=5)
 
     # 巻き戻し
-    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=10, command=form.back)
+    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=5, command=form.back)
     form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
 
+    # 一コマ戻す
+    form.footer.btn_frame_back = tk.Button(form.footer, text="|<", width=5, command=form.frame_back)
+    form.footer.btn_frame_back.pack(side=tk.LEFT, padx=5, pady=5)
+
     # 再生/一時停止
-    form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=lambda: form.toggle_play)
+    form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=form.toggle_play)
     form.footer.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
 
+    # 一コマ進む
+    form.footer.btn_frame_forward = tk.Button(form.footer, text=">|", width=5, command=form.frame_forward)
+    form.footer.btn_frame_forward.pack(side=tk.LEFT, padx=5, pady=5)
+
     # 早送り
-    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=10, command=form.front)
+    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=5, command=form.forward)
     form.footer.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 進捗バーとタイムスタンプ
