@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk
 import os
-import cv2 as cv
+import cv2
 import numpy as np
 
 from menu_file import (
@@ -63,6 +63,8 @@ def left_click(form, event, ctrl_click):
                 else:
                     set_highlight(form, widget)
                     form.selected_label[widget]=True
+                    form.lbl_timestamp.config(text="00:00/00:00")
+                    form.stop_video()
 
             else: # Ctrlキーが押されていない場合
                 # いったんすべての選択を解除
@@ -73,6 +75,7 @@ def left_click(form, event, ctrl_click):
                 set_highlight(form, widget)
                 form.selected_label[widget]=True
 
+
             # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
             if len(form.selected_label)==1:
                 form.change_control_mode(tk.NORMAL)
@@ -81,7 +84,11 @@ def left_click(form, event, ctrl_click):
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(file_path)
                 form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
-                form.lbl_timestamp.config(text=form.get_video_time_info(file_path))
+                
+                info = form.video_info[file_path]
+                capture = info['capture']
+                capture.set(cv2.CAP_PROP_POS_FRAMES, capture.get(cv2.CAP_PROP_POS_FRAMES))
+                form.stop_video()
             else:
                 form.change_control_mode(tk.DISABLED)
 
@@ -90,18 +97,21 @@ def left_click(form, event, ctrl_click):
                 else:
                     form.header.lbl_video_name.config(text="選択動画： なし")
 
+                form.lbl_timestamp.config(text="00:00/00:00")
+                form.stop_video()
+
 
         #動画以外をクリックした場合
         else:
 
             # フッターとヘッダー（一部）のアイテムは例外
             if widget not in [form.footer.btn_rewind, form.footer.btn_frame_back, form.footer.btn_play_pause, form.footer.btn_frame_forward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name]:
+                form.stop_video()
                 form.change_control_mode(tk.DISABLED)
                 reset_all_highlights(form)
                 form.selected_label.clear() # 全てクリア
                 form.header.lbl_video_name.config(text="選択動画： なし")
                 form.lbl_timestamp.config(text="00:00/00:00")
-                form.stop_video()
 
 def reset_all_highlights(form):
     """全ての動画のハイライトをリセットする"""

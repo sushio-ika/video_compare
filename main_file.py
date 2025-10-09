@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import threading
 import os
 from tkinterdnd2 import TkinterDnD
+import time
 
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
@@ -151,10 +152,45 @@ class main(TkinterDnD.Tk):
         form.control_video(capture, video_label, stop_flag, selected_file_path, frames_to_advance)
 
     def control_video(form, capture, video_label, stop_flag, file_path, frames):
-        """動画を指定されたフレーム分シークする関数"""
-        """正の値で早送り、負の値で巻き戻し"""
-        return
+        """動画を指定されたフレーム分移動する関数"""
+        # 再生中なら一時停止
+        if not form.paused:
+            form.toggle_play()
+            time.sleep(0.1)
+            form.paused = True
+            form.footer.btn_play_pause.config(text="▶")
         
+        # 現在のフレーム位置を取得し、指定されたフレーム数だけ移動
+        current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+        total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        new_frame = current_frame + frames
+
+        new_frame = max(0, min(new_frame, total_frames - 1))  # 範囲内に制限
+        
+        capture.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+        ret, frame = capture.read()
+
+        if ret:
+            form.video_info[file_path]['last_frame'] = frame  # 最後に表示したフレームを保存
+
+            # 画面サイズに合わせてリサイズして表示
+            frame_height, frame_width = frame.shape[:2]
+            aspect_ratio = frame_height / frame_width
+
+            new_width = WINDOW_WIDTH_SIZE // form.set_size - 10  # パディングを考慮
+            new_height = int(new_width * aspect_ratio)
+            
+            resized_frame = cv2.resize(frame, (new_width, new_height))
+            frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+
+            img = Image.fromarray(frame_rgb)
+            img_tk = ImageTk.PhotoImage(img)
+
+            del frame
+
+            video_label.after(0, lambda: form.update_label_image(video_label, img_tk))
+            form.after(0, lambda: form.update_lbl_timestamp(file_path))
+
     def toggle_play(form):
         """動画の再生/一時停止を切り替える"""
         # 念のため
@@ -214,6 +250,9 @@ class main(TkinterDnD.Tk):
         total_seconds = int(total_time % 60)
         
         form.lbl_timestamp.config(text=f"{current_minutes:02d}:{current_seconds:02d}/{total_minutes:02d}:{total_seconds:02d}")
+        form.progress_bar['maximum'] = total_frames
+        form.progress_bar['value'] = current_frame
+        
 
     def on_drop_files(form, event):
         """ドロップされたファイルを処理する関数"""
@@ -289,68 +328,75 @@ class main(TkinterDnD.Tk):
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
         while not stop_flag.is_set():
+            # 一時停止状態なら終了
+            if form.paused:
+                break
+            
             ret, frame = capture.read()
+
+            # 動画の終端に達した場合、最初のフレームに戻す
             if not ret:
-                break  # 動画の終わりに達した場合、ループを終了
+                capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                form.toggle_play()  # ←ループ再生する場合は削除
+                continue
 
             form.video_info[file_path]['last_frame'] = frame  # 最後に表示したフレームを保存
 
-            # フレームのリサイズ
+            # 画面サイズに合わせてリサイズして表示
             frame_height, frame_width = frame.shape[:2]
             aspect_ratio = frame_height / frame_width
+
             new_width = WINDOW_WIDTH_SIZE // form.set_size - 10  # パディングを考慮
             new_height = int(new_width * aspect_ratio)
+            
             resized_frame = cv2.resize(frame, (new_width, new_height))
-
-            # OpenCVのBGRからPILのRGBに変換
             frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+
             img = Image.fromarray(frame_rgb)
             img_tk = ImageTk.PhotoImage(img)
 
-            # ラベルの画像を更新
-            form.update_label_image(video_label, img_tk)
+            del frame
 
-            # タイムスタンプを更新
-            form.update_lbl_timestamp(file_path)
+            video_label.after(0, lambda: form.update_label_image(video_label, img_tk))
+            form.after(0, lambda: form.update_lbl_timestamp(file_path))
 
-            # 再生速度を調整（FPSに基づく）
             fps = capture.get(cv2.CAP_PROP_FPS)
             if fps > 0:
-                delay = int(1000 / fps)
-                if stop_flag.wait(delay / 1000):
-                    break  # stop_flagがセットされた場合、ループを終了
+                delay = 1.0 / fps
+                time.sleep(delay)
             else:
-                if stop_flag.wait(0.03):  # FPSが取得できない場合は約30fpsで更新
-                    break
+                time.sleep(1/30)
 
-        form.paused = True
-        form.footer.btn_play_pause.config(text="▶")
-        stop_flag.set()
-        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 動画を最初に戻す
-        form.update_lbl_timestamp(file_path)  # タイムスタンプをリセット
+        # スレッドが終了したら、スレッド情報をクリア
+        if file_path in form.video_info:
+            form.video_info[file_path]['thread'] = None
         
     def stop_video(form):
         """動画の再生を停止する関数"""
+        # 念のため
         if len(form.selected_label) != 1:
             return
         
+        # 選択中の動画から、ファイルパスを取得
         selected_file_path = form.get_file_path()
         if not selected_file_path:
             return
         
         info = form.video_info[selected_file_path]
+
         stop_flag = info['stop_flag']
         if stop_flag:
             stop_flag.set()
-        
+            
+        info['thread'] = None
         form.paused = True
         form.footer.btn_play_pause.config(text="▶")
-        form.update_lbl_timestamp(selected_file_path)  # タイムスタンプをリセット
-        capture = info['capture']
-        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 動画を最初に戻す
+        form.update_lbl_timestamp(selected_file_path)
+
 
     def get_video_time_info(form, file_path):
         """指定された動画の再生時間情報を返す"""
+        # 動画が存在しない場合
         if file_path not in form.video_info:
             return "00:00/00:00"
 
