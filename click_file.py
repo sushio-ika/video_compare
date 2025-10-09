@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 from menu_file import (
+    select_genre,
     show_how_to_use,
     show_version,
     show_settings,
@@ -32,6 +33,12 @@ def on_mousewheel(form, event):
 
 def double_left_click(form,event):
     widget=event.widget
+
+    # 再生中なら一時停止
+    if form.paused==False:
+        form.toggle_play()
+        form.paused = True
+        form.footer.btn_play_pause.config(text="▶")
 
     # 動画をダブルクリックしたとき、表示サイズを最大にして、その動画の位置まで遷移する
     if widget in [info['label'] for info in form.video_info.values()]:
@@ -135,7 +142,7 @@ def right_clickmenu(form, event):
 
     if widget in form.selected_label:
         menu=tk.Menu(form,tearoff=0)
-        menu.add_command(label="ジャンル", command=messagebox.showinfo("",""))
+        menu.add_command(label="ジャンル", command=lambda: select_genre(form))
         menu.add_separator()
         menu.add_command(label="コピー", command=lambda: copy_video(form))
         menu.add_command(label="切り取り", command=lambda: cut_video(form))

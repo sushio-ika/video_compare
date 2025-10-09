@@ -1,6 +1,42 @@
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, ttk
 import os
+
+def select_genre(form):
+    """ジャンル選択の処理"""
+    new_window = tk.Toplevel(form)
+    new_window.title("ジャンル選択画面")
+    new_window.geometry("500x400")
+    new_window.resizable(False, False)
+
+    x = (new_window.winfo_screenwidth() - 500) // 2
+    y = (new_window.winfo_screenheight() - 400) // 2
+    new_window.geometry(f"+{x}+{y}")
+
+    # ジャンル選択のラジオボタン
+    form.genre_var = tk.StringVar(value=form.genre_list[0])
+    for genre in form.genre_list:
+        rb = ttk.Radiobutton(new_window, text=genre, variable=form.genre_var, value=genre)
+        rb.pack(anchor=tk.W)
+
+    # 確定ボタンを作成
+    btn_confirm = ttk.Button(new_window, text="確定", command=lambda: on_genre_selected(form, form.genre_var.get()))
+    btn_confirm.pack(pady=10)
+
+def on_genre_selected(form, genre):
+    # 念のため
+    if len(form.selected_label) != 1:
+        return
+        
+    # 選択中の動画から、ファイルパスを取得
+    selected_file_path = form.get_file_path()
+    if not selected_file_path:
+        return
+    
+    # video_infoから対応する情報を取得して更新
+    if selected_file_path in form.video_info:
+        form.video_info[selected_file_path]['genre'] = genre
+        messagebox.showinfo("情報", f"ジャンルを「{genre}」に設定しました。")
 
 def show_how_to_use(form):
     """使い方を表示"""
@@ -14,7 +50,7 @@ def show_how_to_use(form):
 def show_version(form):
     messagebox.showinfo("バージョン情報",
                         "バージョン\tver.0.0.1\n"
-                        "更新日\t2025/09/28")
+                        "更新日\t2025/09/28\n")
 def show_settings(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")

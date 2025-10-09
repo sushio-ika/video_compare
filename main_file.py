@@ -32,8 +32,8 @@ class main(TkinterDnD.Tk):
         form.selected_label = {}  #選択中の動画ラベルを管理する辞書
         form.video_info = {}      # 動画の情報を管理する辞書
 
-        form.set_size = 3 # 動画の列数
-
+        form.set_size = 3 # デフォルトの動画の列数
+        form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
         form.thread = None
         form.stop_flag = None
         form.paused = True  # 動画の再生/一時停止状態
@@ -55,6 +55,15 @@ class main(TkinterDnD.Tk):
         form.bind("<Control-Button-1>", lambda event: left_click(form, event, True))
         form.bind("<MouseWheel>", lambda event: on_mousewheel(form, event))
         form.bind("<Double-Button-1>",lambda event: double_left_click(form,event))
+
+        # ショートカットキー
+        form.bind_all("-", lambda event: form.change_size(form.set_size + 1)) #-
+        form.bind_all(";", lambda event: form.change_size(form.set_size - 1)) #+
+        form.bind_all(",", lambda event: form.frame_back()) #<
+        form.bind_all(".", lambda event: form.frame_forward()) #>
+        form.bind_all("k", lambda event: form.toggle_play()) #再生/一時停止
+        form.bind_all("j", lambda event: form.back()) #5秒巻き戻し
+        form.bind_all("l", lambda event: form.forward()) #5秒早送り
 
         form.change_size(form.set_size)
         form.change_control_mode(tk.DISABLED)
@@ -159,16 +168,16 @@ class main(TkinterDnD.Tk):
             time.sleep(0.1)
             form.paused = True
             form.footer.btn_play_pause.config(text="▶")
-        
+
         # 現在のフレーム位置を取得し、指定されたフレーム数だけ移動
         current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
         total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         new_frame = current_frame + frames
 
+        ret, frame = capture.read()
         new_frame = max(0, min(new_frame, total_frames - 1))  # 範囲内に制限
         
         capture.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
-        ret, frame = capture.read()
 
         if ret:
             form.video_info[file_path]['last_frame'] = frame  # 最後に表示したフレームを保存
@@ -300,9 +309,10 @@ class main(TkinterDnD.Tk):
         form.video_info[file_path] = {
             'capture': capture,
             'label': video_label, 
-            'thread': thread, 
+            'thread': thread,
             'stop_flag': stop_flag,
-            'last_frame': None
+            'last_frame': None,
+            'genre': None
         }
 
         # 最初のフレームだけ表示
@@ -522,6 +532,7 @@ class main(TkinterDnD.Tk):
             print("walk")# ここまできてない
         else:
             return
+    
     
 if __name__ == '__main__':
     app = main()

@@ -54,13 +54,12 @@ def create_widgets(form):
 
     form.menubar=Menu(form)
     form.genre_menu = Menu(form, tearoff=0) # tearoff=0で、メニューの破線をなくす
-    form.genre_menu.add_checkbutton(label="歩き", variable=form.var_walk, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label="走り", variable=form.var_run, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label="持ち上げる", variable=form.var_up, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label="投げる", variable=form.var_throw, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label="表情", variable=form.var_face, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label="アクション", variable=form.var_action, command=lambda: form.check_genre())
-    form.genre_menu.add_command(label="+(追加)", command=lambda: add_menu())
+    form.genre_menu.add_checkbutton(label=form.genre_list[0], variable=form.var_walk, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label=form.genre_list[1], variable=form.var_run, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label=form.genre_list[2], variable=form.var_up, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label=form.genre_list[3], variable=form.var_throw, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label=form.genre_list[4], variable=form.var_face, command=lambda: form.check_genre())
+    form.genre_menu.add_checkbutton(label=form.genre_list[5], variable=form.var_action, command=lambda: form.check_genre())
 
     def show_menu():
         try:
@@ -132,7 +131,7 @@ def create_widgets(form):
     # Canvas内にFrameを作成
     form.video_frame = tk.Frame(form.canvas, bg="#2E2E2E")
     form.canvas.create_window((0, 0), window=form.video_frame, anchor="nw")
-
+    
     # Canvasサイズに合わせてスクロール領域を更新
     def on_frame_configure(event):
         form.canvas.configure(scrollregion=form.canvas.bbox("all"))
