@@ -44,22 +44,22 @@ def create_widgets(form):
     form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
     form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    # ジャンルを選択するメニュー
-    form.var_walk = tk.BooleanVar(form)
-    form.var_run = tk.BooleanVar(form)
-    form.var_up = tk.BooleanVar(form)
-    form.var_throw = tk.BooleanVar(form)
-    form.var_face = tk.BooleanVar(form)
-    form.var_action = tk.BooleanVar(form)
-
     form.menubar=Menu(form)
-    form.genre_menu = Menu(form, tearoff=0) # tearoff=0で、メニューの破線をなくす
-    form.genre_menu.add_checkbutton(label=form.genre_list[0], variable=form.var_walk, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label=form.genre_list[1], variable=form.var_run, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label=form.genre_list[2], variable=form.var_up, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label=form.genre_list[3], variable=form.var_throw, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label=form.genre_list[4], variable=form.var_face, command=lambda: form.check_genre())
-    form.genre_menu.add_checkbutton(label=form.genre_list[5], variable=form.var_action, command=lambda: form.check_genre())
+    form.genre_menu = Menu(form, tearoff=0)
+    form.genre_menu.add_checkbutton(label=form.genre_list[0], variable=form.var_walk, command=lambda: set_genre(0))
+    form.genre_menu.add_checkbutton(label=form.genre_list[1], variable=form.var_run, command=lambda: set_genre(1))
+    form.genre_menu.add_checkbutton(label=form.genre_list[2], variable=form.var_up, command=lambda: set_genre(2))
+    form.genre_menu.add_checkbutton(label=form.genre_list[3], variable=form.var_throw, command=lambda: set_genre(3))
+    form.genre_menu.add_checkbutton(label=form.genre_list[4], variable=form.var_face, command=lambda: set_genre(4))
+    form.genre_menu.add_checkbutton(label=form.genre_list[5], variable=form.var_action, command=lambda: set_genre(5))
+
+    def set_genre(genre_index):
+        # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
+        if form.check_genre_list[genre_index] == 0:
+            form.check_genre_list[genre_index] = 1
+        else:
+            form.check_genre_list[genre_index] = 0
+        form.check_genre(genre_index)
 
     def show_menu():
         try:

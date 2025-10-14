@@ -36,7 +36,7 @@ def on_genre_selected(form, genre):
     # video_infoから対応する情報を取得して更新
     if selected_file_path in form.video_info:
         form.video_info[selected_file_path]['genre'] = genre
-        messagebox.showinfo("情報", f"ジャンルを「{genre}」に設定しました。")
+        print(f"ジャンルが設定されました: {genre}")
 
 def show_how_to_use(form):
     """使い方を表示"""
@@ -80,14 +80,13 @@ def copy_video(form):
 def paste_video(form):
     """動画を貼り付ける"""
     try:
-        # 1. クリップボードの内容を取得
         file_path = form.clipboard_get()
-        
-        if file_path:
-            print(f"クリップボードから取得したテキスト: {file_path}")
+        if os.path.isfile(file_path):
             form.add_video(file_path)
+            print(f"クリップボードから貼り付けました: {file_path}")
+            return file_path
         else:
-            print("クリップボードが空です。")
+            print("クリップボードの内容は有効なファイルパスではありません。")
             return None
             
     except tk.TclError:
@@ -103,6 +102,7 @@ def cut_video(form):
             form.clipboard_clear()
             form.clipboard_append(file_path)
             delete_video(form, widgets=list(form.selected_label.keys()))
+            form.change_size(form.set_size)
         
             print(f"クリップボードにコピーされました: {file_path}")
         

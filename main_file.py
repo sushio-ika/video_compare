@@ -9,6 +9,7 @@ import time
 
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
+from menu_file import (select_genre, show_how_to_use, show_version, show_settings, put_one_back, put_one_forward, copy_video, paste_video, cut_video, delete_video)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -31,9 +32,22 @@ class main(TkinterDnD.Tk):
         form.resize_info = None  #サイズ変更の情報を保存する辞書
         form.selected_label = {}  #選択中の動画ラベルを管理する辞書
         form.video_info = {}      # 動画の情報を管理する辞書
+        form.copied_video = None # コピー/カットした動画の情報を保存する辞書
 
         form.set_size = 3 # デフォルトの動画の列数
+
+            # ジャンルを選択するメニュー
+        form.var_walk = tk.BooleanVar(form)
+        form.var_run = tk.BooleanVar(form)
+        form.var_up = tk.BooleanVar(form)
+        form.var_throw = tk.BooleanVar(form)
+        form.var_face = tk.BooleanVar(form)
+        form.var_action = tk.BooleanVar(form)
+
         form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
+        form.check_genre_list = [] # 選択されているジャンルの有無を保存するリスト（0:未選択, 1:選択中）
+        for _ in form.genre_list:
+            form.check_genre_list.append(0)
         form.thread = None
         form.stop_flag = None
         form.paused = True  # 動画の再生/一時停止状態
@@ -64,6 +78,10 @@ class main(TkinterDnD.Tk):
         form.bind_all("k", lambda event: form.toggle_play()) #再生/一時停止
         form.bind_all("j", lambda event: form.back()) #5秒巻き戻し
         form.bind_all("l", lambda event: form.forward()) #5秒早送り
+        form.bind_all("<Control-c>", lambda event: copy_video(form)) #コピー
+        form.bind_all("<Control-x>", lambda event: cut_video(form)) #カット
+        form.bind_all("<Control-v>", lambda event: paste_video(form)) #ペースト
+        form.bind_all("<BackSpace>", lambda event: delete_video(form)) #削除
 
         form.change_size(form.set_size)
         form.change_control_mode(tk.DISABLED)
@@ -521,19 +539,30 @@ class main(TkinterDnD.Tk):
         file_path = ""
         for path, info in form.video_info.items():
             if info['label'] == selected_label:
-                file_path = path
-                break
+                file_path += path
         return file_path
     
-    def check_genre(form):
-        # ここに遷移はしてる
-        if form.genre_menu.add_checkbutton==True:
-            # ジャンル「歩き」の動画に絞る
-            print("walk")# ここまできてない
-        else:
-            return
-    
-    
+    def check_genre(form, genre_index):
+        # 選択されているジャンルのみ表示
+        for i in form.check_genre_list:
+            if i==1:
+                # 追加されているすべての動画をチェック
+                for path, info in form.video_info.items():
+                    label = info['label']
+                    genre = info['genre']
+
+                    # ジャンルが選択されている場合のみ表示
+                    if genre is not None and form.genre_list[genre_index] == genre:
+                        label.grid()  # 表示
+                    else:
+                        label.grid_remove()  # 非表示
+        # 選択されているジャンルがない場合、すべて表示
+        if sum(form.check_genre_list) == 0:
+            for path, info in form.video_info.items():
+                label = info['label']
+                label.grid()  # すべて表示
+
+                        
 if __name__ == '__main__':
     app = main()
     app.mainloop()
