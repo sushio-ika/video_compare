@@ -10,6 +10,7 @@ import time
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
 from menu_file import (copy_video, paste_video, cut_video, delete_video)
+from log_file import(add_log)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -94,6 +95,8 @@ class main(TkinterDnD.Tk):
         y = (form.winfo_screenheight() // 2) - (form.winfo_height() // 2) #(画面の高さ // 2) - (ウィンドウの高さ // 2)
 
         form.geometry(f"+{x}+{y}")
+
+        add_log("START")
 
 
     def back(form):
@@ -348,6 +351,8 @@ class main(TkinterDnD.Tk):
             form.update_label_image(video_label, img_tk)
 
         form.change_widget_mode(tk.NORMAL)
+
+        add_log(f"動画 {os.path.basename(file_path)} を追加")
         
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():

@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+import os
+from log_file import(add_log)
 
 def popup_select_genre(form):
     """ジャンル選択の処理"""
@@ -18,9 +20,15 @@ def popup_select_genre(form):
         rb = ttk.Radiobutton(new_window, text=genre, variable=form.genre_var, value=genre)
         rb.pack(anchor=tk.W)
 
+    def on_confirm():
+        selected_genre(form, form.genre_var.get())  # ジャンル設定
+        new_window.destroy()  # ウィンドウを閉じる
+        add_log(f"動画 {os.path.basename(form.selected_label)} のジャンルを「{form.genre_var.get()}」に設定")  # ログ追加
+
     # 確定ボタンを作成
-    btn_confirm = ttk.Button(new_window, text="確定", command=lambda: selected_genre(form, form.genre_var.get()))
+    btn_confirm = ttk.Button(new_window, text="確定", command=on_confirm)
     btn_confirm.pack(pady=10)
+
     # 閉じるボタンを作成
     btn_close = ttk.Button(new_window, text="閉じる", command=new_window.destroy)
     btn_close.pack(pady=10)
@@ -41,6 +49,8 @@ def selected_genre(form, genre):
         
         if target_filepath:
             form.video_info[target_filepath]['genre'] = genre
+            # ログに記録
+            add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを「{genre}」に設定")
 
 
 def check_genre(form):

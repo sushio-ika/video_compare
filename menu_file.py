@@ -163,19 +163,40 @@ def log_box(form):
         return
 
     form.log_window = tk.Toplevel(form)
+    form.log_window.configure(bg="#000000")
     form.log_window.overrideredirect(True)
-    form.log_window.geometry("600x400")
-    form.log_window.resizable(True, True)
-    form.log_window.focus_set
+    form.log_window.resizable(False,False)
+    form.log_window.focus_set()
+    form.log_window.bind("<FocusOut>", lambda event:form.log_window.destroy())
+    
+    # メインウィンドウのレイアウト情報を確実に取得する
+    form.update_idletasks()
 
-    x = (form.log_window.winfo_screenwidth() - 600) // 2
-    y = (form.log_window.winfo_screenheight() - 400) // 2
-    form.log_window.geometry(f"+{x}+{y}")
+    # ヘッダーとフッターの高さを取得（存在しない場合は0）
+    header_h = form.header.winfo_height()
+    footer_h = form.footer.winfo_height()
+
+    # ログウィンドウの幅と高さを計算
+    log_w = 400
+    available_h = max(100, form.winfo_height() - header_h - footer_h)  # 最低高さを確保
+    log_h = available_h
+
+    # 画面上の配置位置を計算（ヘッダーの下、左端）
+    pos_x = form.winfo_rootx()
+    pos_y = form.winfo_rooty() + header_h
+
+    # 画面外にはみ出さないように調整（必要なら）
+    screen_h = form.winfo_screenheight()
+    if pos_y + log_h > screen_h:
+        log_h = max(100, screen_h - pos_y)
+
+    form.log_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
+
 
     # テキストウィジェットを作成してログを表示
     text_widget = tk.Text(form.log_window, wrap=tk.WORD)
     text_widget.pack(expand=True, fill=tk.BOTH)
-
+    
     # ログファイルの内容を読み込んでテキストウィジェットに挿入
     log_file_path = "ml.log"  # ログファイルのパスを指定
     if os.path.isfile(log_file_path):
