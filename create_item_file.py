@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
-from menu_file import(delete_video,new_file)
+from menu_file import(delete_video,new_file,log_box)
+from genre_file import(check_genre)
 
 def create_widgets(form):
     """UI部品の配置""" 
@@ -13,6 +14,13 @@ def create_widgets(form):
     form.header.config(height=50)
     form.header.pack(pady=5)
 
+    # 
+    # ログ表示ボタン
+    form.header.btn_log = tk.Button(form.header, text="≣", width=3, command=lambda: log_box(form))
+    form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
+    form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    # 終了ボタン
     form.header.btn_exit = tk.Button(form.header, text="終了", width=10, command=lambda: form.destroy())
     form.header.btn_exit.pack(side=tk.LEFT, padx=5, pady=5)
     form.header.btn_exit.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
@@ -59,7 +67,7 @@ def create_widgets(form):
             form.check_genre_list[genre_index] = 1
         else:
             form.check_genre_list[genre_index] = 0
-        form.check_genre(genre_index)
+        check_genre(form)
 
     def show_menu():
         try:

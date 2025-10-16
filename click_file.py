@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 
 from menu_file import (
-    select_genre,
     show_how_to_use,
     show_version,
     show_settings,
@@ -21,6 +20,7 @@ from menu_file import (
     copy_video_name
 )
 from create_item_file import (create_widgets)
+from genre_file import (popup_select_genre)
 
 def on_mousewheel(form, event):
     # 動画がある範囲のみスクロール可能にする
@@ -90,8 +90,14 @@ def left_click(form, event, ctrl_click):
 
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(file_path)
-                form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
-                
+
+                # ジャンルが設定されていれば表示
+                genre = form.video_info.get(file_path, {}).get('genre')
+                if genre:
+                    form.header.lbl_video_name.config(text=f"選択動画： [{genre}] {file_name}")
+                else:
+                    form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
+
                 info = form.video_info[file_path]
                 capture = info['capture']
                 capture.set(cv2.CAP_PROP_POS_FRAMES, capture.get(cv2.CAP_PROP_POS_FRAMES))
@@ -142,7 +148,7 @@ def right_clickmenu(form, event):
 
     if widget in form.selected_label:
         menu=tk.Menu(form,tearoff=0)
-        menu.add_command(label="ジャンル", command=lambda: select_genre(form))
+        menu.add_command(label="ジャンル", command=lambda: popup_select_genre(form))
         menu.add_separator()
         menu.add_command(label="コピー", command=lambda: copy_video(form))
         menu.add_command(label="切り取り", command=lambda: cut_video(form))

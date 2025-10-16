@@ -9,7 +9,7 @@ import time
 
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
-from menu_file import (select_genre, show_how_to_use, show_version, show_settings, put_one_back, put_one_forward, copy_video, paste_video, cut_video, delete_video)
+from menu_file import (copy_video, paste_video, cut_video, delete_video)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -541,26 +541,7 @@ class main(TkinterDnD.Tk):
             if info['label'] == selected_label:
                 file_path += path
         return file_path
-    
-    def check_genre(form, genre_index):
-        # 選択されているジャンルのみ表示
-        for i in form.check_genre_list:
-            if i==1:
-                # 追加されているすべての動画をチェック
-                for path, info in form.video_info.items():
-                    label = info['label']
-                    genre = info['genre']
-
-                    # ジャンルが選択されている場合のみ表示
-                    if genre is not None and form.genre_list[genre_index] == genre:
-                        label.grid()  # 表示
-                    else:
-                        label.grid_remove()  # 非表示
-        # 選択されているジャンルがない場合、すべて表示
-        if sum(form.check_genre_list) == 0:
-            for path, info in form.video_info.items():
-                label = info['label']
-                label.grid()  # すべて表示
+        
 
                         
 if __name__ == '__main__':

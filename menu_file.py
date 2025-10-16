@@ -2,42 +2,6 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, ttk
 import os
 
-def select_genre(form):
-    """ジャンル選択の処理"""
-    new_window = tk.Toplevel(form)
-    new_window.title("ジャンル選択画面")
-    new_window.geometry("500x400")
-    new_window.resizable(False, False)
-
-    x = (new_window.winfo_screenwidth() - 500) // 2
-    y = (new_window.winfo_screenheight() - 400) // 2
-    new_window.geometry(f"+{x}+{y}")
-
-    # ジャンル選択のラジオボタン
-    form.genre_var = tk.StringVar(value=form.genre_list[0])
-    for genre in form.genre_list:
-        rb = ttk.Radiobutton(new_window, text=genre, variable=form.genre_var, value=genre)
-        rb.pack(anchor=tk.W)
-
-    # 確定ボタンを作成
-    btn_confirm = ttk.Button(new_window, text="確定", command=lambda: on_genre_selected(form, form.genre_var.get()))
-    btn_confirm.pack(pady=10)
-
-def on_genre_selected(form, genre):
-    # 念のため
-    if len(form.selected_label) != 1:
-        return
-        
-    # 選択中の動画から、ファイルパスを取得
-    selected_file_path = form.get_file_path()
-    if not selected_file_path:
-        return
-    
-    # video_infoから対応する情報を取得して更新
-    if selected_file_path in form.video_info:
-        form.video_info[selected_file_path]['genre'] = genre
-        print(f"ジャンルが設定されました: {genre}")
-
 def show_how_to_use(form):
     """使い方を表示"""
     messagebox.showinfo(
@@ -192,3 +156,34 @@ def copy_video_name(form):
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
     
+def log_box(form):
+    """ログ表示ウィンドウを表示"""
+    if hasattr(form, 'log_window') and form.log_window.winfo_exists():
+        form.log_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
+        return
+
+    form.log_window = tk.Toplevel(form)
+    form.log_window.overrideredirect(True)
+    form.log_window.geometry("600x400")
+    form.log_window.resizable(True, True)
+    form.log_window.focus_set
+
+    x = (form.log_window.winfo_screenwidth() - 600) // 2
+    y = (form.log_window.winfo_screenheight() - 400) // 2
+    form.log_window.geometry(f"+{x}+{y}")
+
+    # テキストウィジェットを作成してログを表示
+    text_widget = tk.Text(form.log_window, wrap=tk.WORD)
+    text_widget.pack(expand=True, fill=tk.BOTH)
+
+    # ログファイルの内容を読み込んでテキストウィジェットに挿入
+    log_file_path = "ml.log"  # ログファイルのパスを指定
+    if os.path.isfile(log_file_path):
+        with open(log_file_path, "r", encoding="utf-8") as log_file:
+            log_content = log_file.read()
+            text_widget.insert(tk.END, log_content)
+    else:
+        text_widget.insert(tk.END, "ログファイルが見つかりません。")
+
+    # テキストウィジェットを読み取り専用に設定
+    text_widget.config(state=tk.DISABLED)
