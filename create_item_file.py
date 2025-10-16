@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
-from menu_file import(delete_video,new_file,log_box)
+from menu_file import(delete_video,new_file,log_box,file_box)
 from genre_file import(check_genre)
 from log_file import(add_log)
 
@@ -15,48 +15,17 @@ def create_widgets(form):
     form.header.config(height=50)
     form.header.pack(pady=5)
 
-    # 
-    # ログ表示ボタン
-    form.header.btn_log = tk.Button(form.header, text="≣", width=3, command=lambda: log_box(form))
+    # ファイル選択ボタン
+    form.header.btn_log = tk.Button(form.header, text="≣", width=3, command=lambda: file_box(form))
     form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
     form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    def on_closing():
-        add_log("END\n\n")
-        form.destroy()
+    # ログ表示ボタン
+    form.header.btn_log = tk.Button(form.header, text="ログ", width=3, command=lambda: log_box(form))
+    form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
+    form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
-    # 終了ボタン
-    form.header.btn_exit = tk.Button(form.header, text="終了", width=10, command=on_closing)
-    form.header.btn_exit.pack(side=tk.LEFT, padx=5, pady=5)
-    form.header.btn_exit.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
-
-    # ファイル保存、開くボタン
-    form.header.btn_open = tk.Button(form.header, text="開く", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
-    form.header.btn_open.pack(side=tk.LEFT, padx=5, pady=5)
-    form.header.btn_open.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-        
-    form.header.btn_save = tk.Button(form.header, text="保存", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
-    form.header.btn_save.pack(side=tk.LEFT, padx=5, pady=5)
-    form.header.btn_save.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-
-    form.header.btn_new = tk.Button(form.header, text="新規作成", width=10, command=lambda: messagebox.showinfo("情報", "新規作成機能は未実装です。"))
-    form.header.btn_new.pack(side=tk.LEFT, padx=5, pady=5)
-    form.header.btn_new.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-
-    # 選択中の動画名を表示するラベル
-    form.header.lbl_video_name=tk.Label(form.header,text="選択動画： なし", width=50, anchor="w")
-    form.header.lbl_video_name.pack(side=tk.LEFT,padx=5,pady=5)
-    form.header.lbl_video_name.config(bg="#FFFFFF",fg="#000000")
-
-    # 画面サイズを変更するボタン
-    form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
-    form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_size_minus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-        
-    form.header.btn_size_plus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_size(form.set_size - 1))
-    form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-
+    # ジャンル選択メニュー
     form.menubar=Menu(form)
     form.genre_menu = Menu(form, tearoff=0)
     form.genre_menu.add_checkbutton(label=form.genre_list[0], variable=form.var_walk, command=lambda: set_genre(0))
@@ -87,6 +56,22 @@ def create_widgets(form):
     # ボタンを作成
     form.header.genre_btn = tk.Button(form.header, text="ジャンル", command=lambda: show_menu())
     form.header.genre_btn.pack(side=tk.LEFT,padx=5, pady=5)
+    form.header.genre_btn.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+
+    # 選択中の動画名を画面中央に表示するラベル
+    form.header.lbl_video_name=tk.Label(form.header,text="選択動画： なし", width=50, anchor="w")
+    form.header.lbl_video_name.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5, pady=5)
+    form.header.lbl_video_name.config(bg="#FFFFFF",fg="#000000")
+
+
+    # 画面サイズを変更するボタン
+    form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
+    form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.header.btn_size_minus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+        
+    form.header.btn_size_plus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_size(form.set_size - 1))
+    form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
     # 動画再生コントロールを設置するフッターを作成
     form.footer = tk.Frame(form)

@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, ttk
 import os
 
+from log_file import(add_log)
+
 def show_how_to_use(form):
     """使い方を表示"""
     messagebox.showinfo(
@@ -178,8 +180,7 @@ def log_box(form):
 
     # ログウィンドウの幅と高さを計算
     log_w = 400
-    available_h = max(100, form.winfo_height() - header_h - footer_h)  # 最低高さを確保
-    log_h = available_h
+    log_h = max(100, form.winfo_height() - header_h - footer_h)  # 最低高さを確保
 
     # 画面上の配置位置を計算（ヘッダーの下、左端）
     pos_x = form.winfo_rootx()
@@ -208,3 +209,60 @@ def log_box(form):
 
     # テキストウィジェットを読み取り専用に設定
     text_widget.config(state=tk.DISABLED)
+
+def file_box(form):
+    """ファイル機能選択ウィンドウを表示"""
+    if hasattr(form, 'file_window') and form.file_window.winfo_exists():
+        form.file_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
+        return
+
+    form.file_window = tk.Toplevel(form)
+    form.file_window.configure(bg="#000000")
+    form.file_window.overrideredirect(True)
+    form.file_window.resizable(False,False)
+    form.file_window.focus_set()
+    form.file_window.bind("<FocusOut>", lambda event:form.file_window.destroy())
+
+    # メインウィンドウのレイアウト情報を確実に取得する
+    form.update_idletasks()
+
+    # ヘッダーの高さを取得（存在しない場合は0）
+    header_h = form.header.winfo_height()
+
+    # ログウィンドウの幅と高さを計算
+    log_w = 400
+    log_h = 400
+
+    # 画面上の配置位置を計算（ヘッダーの下、左端）
+    pos_x = form.winfo_rootx()
+    pos_y = form.winfo_rooty() + header_h
+
+    # 画面外にはみ出さないように調整（必要なら）
+    screen_h = form.winfo_screenheight()
+    if pos_y + log_h > screen_h:
+        log_h = max(100, screen_h - pos_y)
+
+    form.file_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
+
+    # ファイル保存、開くボタン
+    form.file_window.btn_open = tk.Button(form.file_window, text="開く", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_open.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_open.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    form.file_window.btn_save = tk.Button(form.file_window, text="保存", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_save.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_save.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    form.file_window.btn_new = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: messagebox.showinfo("情報", "新規作成機能は未実装です。"))
+    form.file_window.btn_new.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_new.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    def on_closing():
+        add_log("END\n\n")
+        form.destroy()
+
+    # 終了ボタン
+    form.file_window.btn_exit = tk.Button(form.file_window, text="終了", width=10, command=on_closing)
+    form.file_window.btn_exit.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_exit.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
+
