@@ -13,6 +13,15 @@ def popup_select_genre(form):
     x = (new_window.winfo_screenwidth() - 500) // 2
     y = (new_window.winfo_screenheight() - 400) // 2
     new_window.geometry(f"+{x}+{y}")
+   
+    def on_confirm():
+        selected_genre(form, form.genre_var.get())  # ジャンル設定
+        new_window.destroy()  # ウィンドウを閉じる
+
+    def on_clear():
+        selected_genre(form, None)  # ジャンル設定解除
+        new_window.destroy()  # ウィンドウを閉じる
+
 
     # ジャンル選択のラジオボタン
     form.genre_var = tk.StringVar(value=form.genre_list[0])
@@ -20,10 +29,9 @@ def popup_select_genre(form):
         rb = ttk.Radiobutton(new_window, text=genre, variable=form.genre_var, value=genre)
         rb.pack(anchor=tk.W)
 
-    def on_confirm():
-        selected_genre(form, form.genre_var.get())  # ジャンル設定
-        new_window.destroy()  # ウィンドウを閉じる
-        add_log(f"動画 {os.path.basename(form.selected_label)} のジャンルを「{form.genre_var.get()}」に設定")  # ログ追加
+    # ジャンル解除ボタンを作成
+    btn_cancel = ttk.Button(new_window, text="解除", command=on_clear)
+    btn_cancel.pack(pady=10)
 
     # 確定ボタンを作成
     btn_confirm = ttk.Button(new_window, text="確定", command=on_confirm)
@@ -48,12 +56,30 @@ def selected_genre(form, genre):
                 break
         
         if target_filepath:
-            form.video_info[target_filepath]['genre'] = genre
-            # ログに記録
-            add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを「{genre}」に設定")
+            # ジャンルを解除する場合
+            if genre is None:
+                # ジャンル解除
+                form.video_info[target_filepath]['genre'] = None
+                # ログに記録
+                add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを解除")
+
+                # ファイル名のみを抽出して表示
+                file_name = os.path.basename(target_filepath)
+                form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
+
+            # ジャンルを設定する場合
+            else:
+                form.video_info[target_filepath]['genre'] = genre
+                # ログに記録
+                add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを「{genre}」に設定")
+
+                # ファイル名のみを抽出して表示
+                file_name = os.path.basename(target_filepath)
+                form.header.lbl_video_name.config(text=f"選択動画： [{genre}] {file_name}")
 
 
 def check_genre(form):
+    """check_genre_list(0または1を格納)を参照し、動画の表示/非表示を切り替える"""
     # いずれも未選択なら全表示
     if not any(form.check_genre_list):
         for path, info in form.video_info.items():
@@ -69,6 +95,7 @@ def check_genre(form):
     for path, info in form.video_info.items():
         label = info.get('label')
         genre = info.get('genre')
+        grid_video = []
 
         # 動画が存在しない場合
         if not label:
@@ -77,8 +104,11 @@ def check_genre(form):
         # ジャンルが設定されていない場合は非表示
         if genre is not None and genre in active_genres:
             label.grid()
+            grid_video.append(info)
         else:
             label.grid_remove()
+
+        form.pack_video(grid_video)  # 動画を再配置
 
 def reset_genre(form):
     """ジャンル選択をリセットする"""

@@ -10,7 +10,8 @@ import time
 from click_file import (left_click, right_clickmenu, on_mousewheel,double_left_click)
 from create_item_file import (create_widgets)
 from menu_file import (copy_video, paste_video, cut_video, delete_video)
-from log_file import(add_log)
+from log_file import(add_log, init_log)
+from genre_file import(check_genre)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -34,10 +35,10 @@ class main(TkinterDnD.Tk):
         form.selected_label = {}  #選択中の動画ラベルを管理する辞書
         form.video_info = {}      # 動画の情報を管理する辞書
         form.copied_video = None # コピー/カットした動画の情報を保存する辞書
-
+        form.current_video_num = 0  # 現在表示されている動画の数
         form.set_size = 3 # デフォルトの動画の列数
 
-            # ジャンルを選択するメニュー
+        # ジャンルを選択するメニュー
         form.var_walk = tk.BooleanVar(form)
         form.var_run = tk.BooleanVar(form)
         form.var_up = tk.BooleanVar(form)
@@ -46,12 +47,13 @@ class main(TkinterDnD.Tk):
         form.var_action = tk.BooleanVar(form)
 
         form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
-        form.check_genre_list = [] # 選択されているジャンルの有無を保存するリスト（0:未選択, 1:選択中）
-        for _ in form.genre_list:
-            form.check_genre_list.append(0)
+        form.check_genre_list = [0] * len(form.genre_list)  # 選択されているジャンルの有無を保存するリスト（0:未選択, 1:選択中）
         form.thread = None
         form.stop_flag = None
         form.paused = True  # 動画の再生/一時停止状態
+
+        # ログファイル初期化
+        init_log()
 
         # ウィンドウの基本設定
         form.title("マルチリンク -新規ファイル-")
@@ -95,8 +97,6 @@ class main(TkinterDnD.Tk):
         y = (form.winfo_screenheight() // 2) - (form.winfo_height() // 2) #(画面の高さ // 2) - (ウィンドウの高さ // 2)
 
         form.geometry(f"+{x}+{y}")
-
-        add_log("START")
 
 
     def back(form):
@@ -328,6 +328,7 @@ class main(TkinterDnD.Tk):
         thread = None  # ← 再生スレッドは起動しない
 
         form.video_info[file_path] = {
+            'videoID': len(form.video_info),
             'capture': capture,
             'label': video_label, 
             'thread': thread,
@@ -352,12 +353,14 @@ class main(TkinterDnD.Tk):
 
         form.change_widget_mode(tk.NORMAL)
 
-        add_log(f"動画 {os.path.basename(file_path)} を追加")
-        
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
 
+    def pack_video(form, video_list):
+        """動画表示エリアの動画を再配置する関数"""
+        
+                
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
         while not stop_flag.is_set():
@@ -459,13 +462,13 @@ class main(TkinterDnD.Tk):
         form.footer.btn_skip.config(state=state)
         form.lbl_timestamp.config(state=state)
         form.lbl_timestamp.config(text="00:00/00:00")
-        
+
     def change_widget_mode(form,state):
         form.header.lbl_video_name.config(text="選択動画： なし")
         form.header.lbl_video_name.config(state=state)
         form.header.btn_size_minus.config(state=state)
         form.header.btn_size_plus.config(state=state)
-
+        form.header.genre_btn.config(state=state)
 
     def update_label_image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""
@@ -514,9 +517,8 @@ class main(TkinterDnD.Tk):
             form.header.btn_size_minus.config(state=tk.NORMAL)
             form.header.btn_size_plus.config(state=tk.NORMAL)
 
-        
-        form.scrollbar_set(0.0) # 最大サイズから画面サイズを小さくした際、画面外に置いて行かれないようにするため
-        form.update_idletasks()
+        # ジャンル設定を反映
+        check_genre(form)
 
     def scrollbar_set(form, point):
         # 任意の位置までスクロールバーを移動

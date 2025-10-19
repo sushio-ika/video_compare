@@ -15,8 +15,8 @@ def show_how_to_use(form):
 
 def show_version(form):
     messagebox.showinfo("バージョン情報",
-                        "バージョン\tver.0.0.1\n"
-                        "更新日\t2025/09/28\n")
+                        "バージョン\tver.0.0.2\n"
+                        "更新日\t2025/10/18\n")
 def show_settings(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")
@@ -258,7 +258,6 @@ def file_box(form):
     form.file_window.btn_new.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     def on_closing():
-        add_log("END\n\n")
         form.destroy()
 
     # 終了ボタン
