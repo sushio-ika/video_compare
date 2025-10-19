@@ -5,140 +5,143 @@ import cv2
 import numpy as np
 
 from menu_file import (
-    show_how_to_use,
-    show_version,
-    show_settings,
-    put_one_back,
-    put_one_forward,
-    copy_video,
-    paste_video,
-    cut_video,
-    delete_video,
-    save_file,
-    open_file,
-    new_file,
-    copy_video_name
+    show_AppInfo,
+    show_Ver,
+    show_SettingWindow,
+    put_Undo,
+    put_Redo,
+    copy_Video,
+    paste_Video,
+    cut_Video,
+    delete_Video,
+    save_File,
+    open_File,
+    create_NewFile,
 )
-from create_item_file import (create_widgets)
 from genre_file import (popup_select_genre)
 
-def on_mousewheel(form, event):
+def scroll_MouseWheel(form, event):
+    """マウスホイールでスクロール処理"""
     # 動画がある範囲のみスクロール可能にする
-    if form.canvas.winfo_height() < form.canvas.bbox("all")[3]:
+    if form.mainForm.winfo_height() < form.mainForm.bbox("all")[3]:
         if event.delta > 0:
-            form.canvas.yview_scroll(-1, "units")
+            form.mainForm.yview_scroll(-1, "units")
         else:
-            form.canvas.yview_scroll(1, "units")
-    form.canvas.yview_moveto(max(0, min(form.canvas.yview()[0], 1)))
+            form.mainForm.yview_scroll(1, "units")
+    form.mainForm.yview_moveto(max(0, min(form.mainForm.yview()[0], 1)))
 
-def double_left_click(form,event):
+def click_DoubleLeft(form,event):
+    """マウスの左ダブルクリック処理"""
     widget=event.widget
 
     # 再生中なら一時停止
-    if form.paused==False:
-        form.toggle_play()
-        form.paused = True
-        form.footer.btn_play_pause.config(text="▶")
+    if form.video_state==False:
+        form.change_PlayPause()
+        form.video_state = True
+        form.footer.btn_playPause.config(text="▶")
 
     # 動画をダブルクリックしたとき、表示サイズを最大にして、その動画の位置まで遷移する
-    if widget in [info['label'] for info in form.video_info.values()]:
-        if form.get_video_index()==-1:
+    if widget in [info['label'] for info in form.all_videos.values()]:
+        videoid=form.get_Videoid()
+        videonum=form.get_VideoNum()
+
+        if videoid==-1:
             messagebox.showerror("エラー","複数の動画が選択されています。") # -1が返ってくるため
-        elif form.get_video_num()==0:
+        elif videonum==0:
             messagebox.showerror("エラー","動画がまだありません。") # 念のため
         else:
-            form.change_size(1)
-            point=form.get_video_index() / form.get_video_num()
-            form.scrollbar_set(point)
+            form.change_VideoSize(1)
+            point=videoid / videonum
+            form.move_Scrollbar(point)
 
-def left_click(form, event, ctrl_click):
-        """マウスの左クリックを処理する"""
+def click_Left(form, event, click_ctrl):
+        """マウスの左クリック処理"""
         widget = event.widget
 
         #動画をクリックした場合
-        if widget in [info['label'] for info in form.video_info.values()]:
+        if widget in [info['label'] for info in form.all_videos.values()]:
             
             #Ctrlキーが押されている場合
-            if ctrl_click:
+            if click_ctrl:
 
                 #すでに選択されている動画をクリックした場合
-                if widget in form.selected_label:
-                    reset_video_highlight(form, widget)
-                    del form.selected_label[widget]
+                if widget in form.selected_videos:
+                    clear_AvideoHighlight(form, widget)
+                    del form.selected_videos[widget]
                 
                 #新たに選択された動画をクリックした場合
                 else:
-                    set_highlight(form, widget)
-                    form.selected_label[widget]=True
+                    set_VideoHighlight(form, widget)
+                    form.selected_videos[widget]=True
                     form.lbl_timestamp.config(text="00:00/00:00")
-                    form.stop_video()
+                    form.stop_Video()
 
             else: # Ctrlキーが押されていない場合
                 # いったんすべての選択を解除
-                reset_all_highlights(form)
-                form.selected_label.clear()
+                clear_AllvideoHighlights(form)
+                form.selected_videos.clear()
 
                 # 現在選択中のラベルを保存
-                set_highlight(form, widget)
-                form.selected_label[widget]=True
+                set_VideoHighlight(form, widget)
+                form.selected_videos[widget]=True
 
 
             # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
-            if len(form.selected_label)==1:
-                form.change_control_mode(tk.NORMAL)
-                file_path=form.get_file_path()
+            if len(form.selected_videos)==1:
+                form.change_VideoState(tk.NORMAL)
+                file_path=form.get_Filepath()
 
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(file_path)
 
                 # ジャンルが設定されていれば表示
-                genre = form.video_info.get(file_path, {}).get('genre')
-                vid=form.video_info[file_path]['videoID']
-                if genre:
-                    form.header.lbl_video_name.config(text=f"選択動画： [{genre}] {file_name}")
+                get_genre = form.all_videos.get(file_path, {}).get('genre')
+                if get_genre:
+                    form.header.lbl_videoName.config(text=f"選択動画： [{get_genre}] {file_name}")
                 else:
-                    form.header.lbl_video_name.config(text=f"選択動画： [{vid}] {file_name}")
+                    form.header.lbl_videoName.config(text=f"選択動画： {file_name}")
 
-                info = form.video_info[file_path]
+                # 動画再生処理の準備
+                info = form.all_videos[file_path]
                 capture = info['capture']
                 capture.set(cv2.CAP_PROP_POS_FRAMES, capture.get(cv2.CAP_PROP_POS_FRAMES))
-                form.stop_video()
+                form.stop_Video()
             else:
-                form.change_control_mode(tk.DISABLED)
+                form.change_VideoState(tk.DISABLED)
 
-                if len(form.selected_label)>1:
-                    form.header.lbl_video_name.config(text="選択動画： *")
+                if len(form.selected_videos)>1:
+                    form.header.lbl_videoName.config(text="選択動画： *")
                 else:
-                    form.header.lbl_video_name.config(text="選択動画： なし")
+                    form.header.lbl_videoName.config(text="選択動画： なし")
 
                 form.lbl_timestamp.config(text="00:00/00:00")
-                form.stop_video()
+                form.stop_Video()
 
 
         #動画以外をクリックした場合
         else:
 
             # フッターとヘッダー（一部）のアイテムは例外
-            if widget not in [form.footer.btn_rewind, form.footer.btn_frame_back, form.footer.btn_play_pause, form.footer.btn_frame_forward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name,form.header.btn_sort]:
-                form.stop_video()
-                form.change_control_mode(tk.DISABLED)
-                reset_all_highlights(form)
-                form.selected_label.clear() # 全てクリア
-                form.header.lbl_video_name.config(text="選択動画： なし")
+            if widget not in [form.footer.btn_rewind, form.footer.btn_frameBack, form.footer.btn_playPause, form.footer.btn_frameForward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_deleteVideo, form.header.btn_sizeMinus, form.header.btn_sizePlus, form.header.lbl_videoName,form.header.btn_sort]:
+                form.stop_Video()
+                form.change_VideoState(tk.DISABLED)
+                clear_AllvideoHighlights(form)
+                form.selected_videos.clear() # 全てクリア
+                form.header.lbl_videoName.config(text="選択動画： なし")
                 form.lbl_timestamp.config(text="00:00/00:00")
 
-def reset_all_highlights(form):
+def clear_AllvideoHighlights(form):
     """全ての動画のハイライトをリセットする"""
-    for info in form.video_info.values():
+    for info in form.all_videos.values():
         info['label'].config(bd=0, relief=tk.FLAT)
         info['label'].config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
 
-def reset_video_highlight(form, label):
+def clear_AvideoHighlight(form, label):
     """特定の動画のハイライトをリセットする"""
     label.config(bd=0, relief=tk.FLAT)
     label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
 
-def set_highlight(form, label):
+def set_VideoHighlight(form, label):
     """選択された動画に枠線を適用する"""
     label.config(bd=2, relief=tk.RAISED, highlightbackground="#5FB7FF", highlightcolor="#5FB7FF", highlightthickness=2)
 
@@ -147,45 +150,45 @@ def right_clickmenu(form, event):
     """右クリックメニューを表示する関数"""
     widget=event.widget
 
-    if widget in form.selected_label:
+    if widget in form.selected_videos:
         menu=tk.Menu(form,tearoff=0)
         menu.add_command(label="ジャンル", command=lambda: popup_select_genre(form))
         menu.add_separator()
-        menu.add_command(label="コピー", command=lambda: copy_video(form))
-        menu.add_command(label="切り取り", command=lambda: cut_video(form))
-        menu.add_command(label="削除", command=lambda: delete_video(form, widgets=list(form.selected_label.keys())))
+        menu.add_command(label="コピー", command=lambda: copy_Video(form))
+        menu.add_command(label="切り取り", command=lambda: cut_Video(form))
+        menu.add_command(label="削除", command=lambda: delete_Video(form, widgets=list(form.selected_videos.keys())))
         menu.post(event.x_root, event.y_root)
-    elif widget in [form.header.lbl_video_name] and form.header.lbl_video_name.cget("state") == tk.NORMAL:
+    elif widget in [form.header.lbl_videoName] and form.header.lbl_videoName.cget("state") == tk.NORMAL:
         menu=tk.Menu(form,tearoff=0)
-        menu.add_command(label="コピー", command=lambda: copy_video_name(form))
+        menu.add_command(label="コピー", command=lambda: form.copy_VideoName())
         menu.post(event.x_root, event.y_root)
     else:
         menu = tk.Menu(form, tearoff=0)
-        menu.add_command(label="ヘルプ", command=lambda: show_how_to_use(form))
-        menu.add_command(label="バージョン情報", command=lambda: show_version(form))
-        menu.add_command(label="設定", command=lambda: show_settings(form))
+        menu.add_command(label="ヘルプ", command=lambda: show_AppInfo())
+        menu.add_command(label="バージョン情報", command=lambda: show_Ver())
+        menu.add_command(label="設定", command=lambda: show_SettingWindow(form))
         menu.add_separator()
-        menu.add_command(label="一つ戻す", command=lambda: put_one_back(form))
-        menu.add_command(label="一つ進める", command=lambda: put_one_forward(form))
+        menu.add_command(label="一つ戻す", command=lambda: put_Undo(form))
+        menu.add_command(label="一つ進める", command=lambda: put_Redo(form))
         menu.add_separator()
-        menu.add_command(label="コピー", command=lambda: copy_video(form))
-        menu.add_command(label="貼り付け", command=lambda: paste_video(form))
-        menu.add_command(label="切り取り", command=lambda: cut_video(form))
-        menu.add_command(label="削除", command=lambda: delete_video(form,  widgets=list(form.selected_label.keys())))
+        menu.add_command(label="コピー", command=lambda: copy_Video(form))
+        menu.add_command(label="貼り付け", command=lambda: paste_Video(form))
+        menu.add_command(label="切り取り", command=lambda: cut_Video(form))
+        menu.add_command(label="削除", command=lambda: delete_Video(form,  del_Videos=list(form.selected_videos.keys())))
         menu.add_separator()
 
         save_menu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="保存", menu=save_menu)
-        save_menu.add_command(label="上書き保存", command=lambda: save_file(form, overwrite=True))    
-        save_menu.add_command(label="名前を付けて保存", command=lambda: save_file(form, overwrite=False))
+        save_menu.add_command(label="上書き保存", command=lambda: save_File(form, overwrite=True))    
+        save_menu.add_command(label="名前を付けて保存", command=lambda: save_File(form, overwrite=False))
 
         open_menu = tk.Menu(menu, tearoff=0)
     
         menu.add_cascade(label="開く", menu=open_menu)
-        open_menu.add_command(label="ファイルを開く", command=lambda: open_file(form))
-        open_menu.add_command(label="動画を開く", command=form.select_video)
-        menu.add_command(label="新規作成", command=lambda: new_file(form))
+        open_menu.add_command(label="ファイルを開く", command=lambda: open_File(form))
+        open_menu.add_command(label="動画を開く", command=form.select_Video)
+        menu.add_command(label="新規作成", command=lambda: create_NewFile(form))
         menu.add_separator()
-        menu.add_command(label="終了", command=form.quit)
+        menu.add_command(label="終了", command=lambda: form.close_App())
 
         menu.post(event.x_root, event.y_root)

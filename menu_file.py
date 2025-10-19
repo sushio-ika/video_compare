@@ -4,7 +4,7 @@ import os
 
 from log_file import(add_log)
 
-def show_how_to_use(form):
+def show_AppInfo():
     """使い方を表示"""
     messagebox.showinfo(
         "マルチリンクの使い方",
@@ -13,27 +13,28 @@ def show_how_to_use(form):
         "3. 動画をダブルクリックすると動画が拡大表示されます。"
     )
 
-def show_version(form):
+def show_Ver():
     messagebox.showinfo("バージョン情報",
                         "バージョン\tver.0.0.2\n"
                         "更新日\t2025/10/18\n")
-def show_settings(form):
+    
+def show_SettingWindow(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")
 
-def put_one_back(form):
+def put_Undo(form):
     """操作を1つ戻す"""
     messagebox.showinfo("情報", "未実装")
 
-def put_one_forward(form):
+def put_Redo(form):
     """操作を1つ進める"""
     messagebox.showinfo("情報", "未実装")
 
-def copy_video(form):
+def copy_Video(form):
     """動画をコピーする"""
-    if form.selected_label:
-        form.change_control_mode(tk.NORMAL)
-        file_path=form.get_file_path()
+    if form.selected_videos:
+        form.change_VideoState(tk.NORMAL)
+        file_path=form.get_Filepath()
         try:
             form.clipboard_clear()
             form.clipboard_append(file_path)
@@ -43,12 +44,12 @@ def copy_video(form):
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
 
-def paste_video(form):
+def paste_Video(form):
     """動画を貼り付ける"""
     try:
         file_path = form.clipboard_get()
         if os.path.isfile(file_path):
-            form.add_video(file_path)
+            form.add_Video(file_path)
             print(f"クリップボードから貼り付けました: {file_path}")
             return file_path
         else:
@@ -59,61 +60,61 @@ def paste_video(form):
         print("クリップボードから有効なテキストを取得できませんでした。")
         return None
 
-def cut_video(form):
+def cut_Video(form):
     """動画を切り取る"""
-    if form.selected_label:
-        form.change_control_mode(tk.NORMAL)
-        file_path=form.get_file_path()
+    if form.selected_videos:
+        form.change_VideoState(tk.NORMAL)
+        file_path=form.get_Filepath()
         try:
             form.clipboard_clear()
             form.clipboard_append(file_path)
-            delete_video(form, widgets=list(form.selected_label.keys()))
-            form.change_size(form.set_size)
+            delete_Video(form, del_Videos=list(form.selected_videos.keys()))
+            form.change_VideoSize(form.col_size)
         
             print(f"クリップボードにコピーされました: {file_path}")
         
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
 
-def delete_video(form, widgets=None):
+def delete_Video(form, del_Videos=None):
     """現在選択している動画を削除する"""
-    if widgets is None:
-        widgets = list(form.selected_label.keys())
+    if del_Videos is None:
+        del_Videos = list(form.selected_videos.keys())
 
-    if not widgets:
+    if not del_Videos:
         messagebox.showerror("エラー","削除する動画を選択してください")
 
     # 選択されたすべての動画を削除
-    for widget in widgets:
+    for widget in del_Videos:
         # video_infoから対応するファイルパスを探す
         delete_filepath = None
-        for file_path, info in form.video_info.items():
+        for file_path, info in form.all_videos.items():
             if info['label'] == widget:
                 delete_filepath = file_path
                 break
         
         if delete_filepath:
-            info = form.video_info[delete_filepath]
+            info = form.all_videos[delete_filepath]
             if info.get('stop_flag'):
                 info['stop_flag'].set()
             if info.get('capture'):
                 info['capture'].release()
             widget.destroy()
 
-            del form.video_info[delete_filepath]
+            del form.all_videos[delete_filepath]
             
             # 削除後、選択されたラベルリストからも削除
-            if widget in form.selected_label:
-                del form.selected_label[widget]
+            if widget in form.selected_videos:
+                del form.selected_videos[widget]
     
-    if not form.video_info:
-        form.change_size(form.set_size)
-        form.change_control_mode(tk.DISABLED)
-        form.change_widget_mode(tk.DISABLED)
+    if not form.all_videos:
+        form.change_VideoSize(form.col_size)
+        form.change_VideoState(tk.DISABLED)
+        form.change_SelectvideoState(tk.DISABLED)
 
     
 
-def save_file(form, overwrite=False):
+def save_File(form, overwrite=False):
     """ファイルを保存する"""
     if overwrite:
         form.title(form.current_file)
@@ -127,7 +128,7 @@ def save_file(form, overwrite=False):
             form.current_file = file_path
             form.title(form.current_file)
 
-def open_file(form):
+def open_File(form):
     """ファイルを開く"""
     file_path = filedialog.askopenfilename(
         title="ファイルを開く",
@@ -137,28 +138,12 @@ def open_file(form):
         form.current_file = file_path
         form.title(form.current_file)
 
-def new_file(form):
+def create_NewFile(form):
     """新しいファイルを作成する"""
     form.current_file = None
     form.title("マルチリンク -新規ファイル-")
-
-def copy_video_name(form):
-    if len(form.selected_label)==1:
-        form.change_control_mode(tk.NORMAL)
-        file_path=form.get_file_path()
-
-        file_name = os.path.basename(file_path)
-
-        try:
-            form.clipboard_clear()
-            form.clipboard_append(file_name)
-        
-            print(f"クリップボードにコピーされました: {file_name}")
-        
-        except tk.TclError as e:
-            print(f"クリップボードへのアクセスエラー: {e}")
     
-def log_box(form):
+def show_LogWindow(form):
     """ログ表示ウィンドウを表示"""
     if hasattr(form, 'log_window') and form.log_window.winfo_exists():
         form.log_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
@@ -171,46 +156,41 @@ def log_box(form):
     form.log_window.focus_set()
     form.log_window.bind("<FocusOut>", lambda event:form.log_window.destroy())
     
-    # メインウィンドウのレイアウト情報を確実に取得する
     form.update_idletasks()
 
-    # ヘッダーとフッターの高さを取得（存在しない場合は0）
-    header_h = form.header.winfo_height()
-    footer_h = form.footer.winfo_height()
-
     # ログウィンドウの幅と高さを計算
-    log_w = 400
-    log_h = max(100, form.winfo_height() - header_h - footer_h)  # 最低高さを確保
+    lWindow_width = 400
+    lWindow_height = max(100, form.winfo_height() - form.header.winfo_height() - form.footer.winfo_height())
 
-    # 画面上の配置位置を計算（ヘッダーの下、左端）
+    # 画面上の配置位置を計算
     pos_x = form.winfo_rootx()
-    pos_y = form.winfo_rooty() + header_h
+    pos_y = form.winfo_rooty() + form.header.winfo_height()
 
     # 画面外にはみ出さないように調整（必要なら）
-    screen_h = form.winfo_screenheight()
-    if pos_y + log_h > screen_h:
-        log_h = max(100, screen_h - pos_y)
+    screen_height = form.winfo_screenheight()
+    if pos_y + lWindow_height > screen_height:
+        lWindow_height = max(100, screen_height - pos_y)
 
-    form.log_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
+    form.log_window.geometry(f"{lWindow_width}x{lWindow_height}+{pos_x}+{pos_y}")
 
 
     # テキストウィジェットを作成してログを表示
-    text_widget = tk.Text(form.log_window, wrap=tk.WORD)
-    text_widget.pack(expand=True, fill=tk.BOTH)
+    txt_log = tk.Text(form.log_window, wrap=tk.WORD)
+    txt_log.pack(expand=True, fill=tk.BOTH)
     
     # ログファイルの内容を読み込んでテキストウィジェットに挿入
-    log_file_path = "ml.log"  # ログファイルのパスを指定
-    if os.path.isfile(log_file_path):
-        with open(log_file_path, "r", encoding="utf-8") as log_file:
+    file_path = "ml.log"
+    if os.path.isfile(file_path):
+        with open(file_path, "r", encoding="utf-8") as log_file:
             log_content = log_file.read()
-            text_widget.insert(tk.END, log_content)
+            txt_log.insert(tk.END, log_content)
     else:
-        text_widget.insert(tk.END, "ログファイルが見つかりません。")
+        txt_log.insert(tk.END, "ログファイルが見つかりません。")
 
     # テキストウィジェットを読み取り専用に設定
-    text_widget.config(state=tk.DISABLED)
+    txt_log.config(state=tk.DISABLED)
 
-def file_box(form):
+def show_FileWindow(form):
     """ファイル機能選択ウィンドウを表示"""
     if hasattr(form, 'file_window') and form.file_window.winfo_exists():
         form.file_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
@@ -222,46 +202,38 @@ def file_box(form):
     form.file_window.resizable(False,False)
     form.file_window.focus_set()
     form.file_window.bind("<FocusOut>", lambda event:form.file_window.destroy())
-
-    # メインウィンドウのレイアウト情報を確実に取得する
+    
     form.update_idletasks()
 
-    # ヘッダーの高さを取得（存在しない場合は0）
-    header_h = form.header.winfo_height()
-
-    # ログウィンドウの幅と高さを計算
-    log_w = 400
-    log_h = 400
+    fWindow_width = 400
+    fWindow_height = 400
 
     # 画面上の配置位置を計算（ヘッダーの下、左端）
     pos_x = form.winfo_rootx()
-    pos_y = form.winfo_rooty() + header_h
+    pos_y = form.winfo_rooty() + form.header.winfo_height()
 
     # 画面外にはみ出さないように調整（必要なら）
-    screen_h = form.winfo_screenheight()
-    if pos_y + log_h > screen_h:
-        log_h = max(100, screen_h - pos_y)
+    screen_height = form.winfo_screenheight()
+    if pos_y + fWindow_height > screen_height:
+        fWindow_height = max(100, screen_height - pos_y)
 
-    form.file_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
+    form.file_window.geometry(f"{fWindow_width}x{fWindow_height}+{pos_x}+{pos_y}")
 
     # ファイル保存、開くボタン
-    form.file_window.btn_open = tk.Button(form.file_window, text="開く", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
-    form.file_window.btn_open.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_open.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+    form.file_window.btn_openFile = tk.Button(form.file_window, text="開く", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_openFile.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    form.file_window.btn_save = tk.Button(form.file_window, text="保存", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
-    form.file_window.btn_save.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_save.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+    form.file_window.btn_saveFile = tk.Button(form.file_window, text="保存", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_saveFile.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    form.file_window.btn_new = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: messagebox.showinfo("情報", "新規作成機能は未実装です。"))
-    form.file_window.btn_new.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_new.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
-
-    def on_closing():
-        form.destroy()
+    form.file_window.btn_newFile = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: messagebox.showinfo("情報", "新規作成機能は未実装です。"))
+    form.file_window.btn_newFile.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     # 終了ボタン
-    form.file_window.btn_exit = tk.Button(form.file_window, text="終了", width=10, command=on_closing)
-    form.file_window.btn_exit.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_exit.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
+    form.file_window.btn_closeApp = tk.Button(form.file_window, text="終了", width=10, command=form.close_App)
+    form.file_window.btn_closeApp.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_closeApp.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
 

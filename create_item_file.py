@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
-from menu_file import(delete_video,new_file,log_box,file_box)
-from genre_file import(check_genre)
+from menu_file import(delete_Video,show_LogWindow,show_FileWindow)
+from genre_file import(check_genre,genre_box)
 from log_file import(add_log)
 
 def create_widgets(form):
@@ -16,47 +16,19 @@ def create_widgets(form):
     form.header.pack(pady=5)
 
     # ファイル選択ボタン
-    form.header.btn_log = tk.Button(form.header, text="≣", width=3, command=lambda: file_box(form))
+    form.header.btn_log = tk.Button(form.header, text="≣", width=3, command=lambda: show_FileWindow(form))
     form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
     form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     # ログ表示ボタン
-    form.header.btn_log = tk.Button(form.header, text="ログ", width=3, command=lambda: log_box(form))
+    form.header.btn_log = tk.Button(form.header, text="ログ", width=3, command=lambda: show_LogWindow(form))
     form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
     form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
-    # ジャンル選択メニュー
-    form.menubar=Menu(form)
-    form.genre_menu = Menu(form, tearoff=0)
-    form.genre_menu.add_checkbutton(label=form.genre_list[0], variable=form.var_walk, command=lambda: set_genre(0))
-    form.genre_menu.add_checkbutton(label=form.genre_list[1], variable=form.var_run, command=lambda: set_genre(1))
-    form.genre_menu.add_checkbutton(label=form.genre_list[2], variable=form.var_up, command=lambda: set_genre(2))
-    form.genre_menu.add_checkbutton(label=form.genre_list[3], variable=form.var_throw, command=lambda: set_genre(3))
-    form.genre_menu.add_checkbutton(label=form.genre_list[4], variable=form.var_face, command=lambda: set_genre(4))
-    form.genre_menu.add_checkbutton(label=form.genre_list[5], variable=form.var_action, command=lambda: set_genre(5))
-
-    def set_genre(genre_index):
-        # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
-        if form.check_genre_list[genre_index] == 0:
-            form.check_genre_list[genre_index] = 1
-        else:
-            form.check_genre_list[genre_index] = 0
-        check_genre(form)
-
-    def show_menu():
-        try:
-            x_pos = form.header.genre_btn.winfo_rootx()
-            y_pos = form.header.genre_btn.winfo_rooty() + form.header.genre_btn.winfo_height()
-            form.genre_menu.tk_popup(x_pos, y_pos) 
-        finally:
-            form.genre_menu.grab_release()
-    def add_menu():
-        return
-
-    # ボタンを作成
-    form.header.genre_btn = tk.Button(form.header, text="ジャンル", command=lambda: show_menu())
-    form.header.genre_btn.pack(side=tk.LEFT,padx=5, pady=5)
-    form.header.genre_btn.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+    # ジャンル選択ボタン
+    form.header.btn_genre = tk.Button(form.header, text="ジャンル", command=lambda: genre_box(form))
+    form.header.btn_genre.pack(side=tk.LEFT,padx=5, pady=5)
+    form.header.btn_genre.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
     # 動画順序入れ替えボタン
     form.header.btn_sort = tk.Button(form.header, text="並び替え", width=6, command=lambda: form.change_video_order())
@@ -64,20 +36,23 @@ def create_widgets(form):
     form.header.btn_sort.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
     # 選択中の動画名を画面中央に表示するラベル
-    form.header.lbl_video_name=tk.Label(form.header,text="選択動画： なし", width=50, anchor="w")
-    form.header.lbl_video_name.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5, pady=5)
-    form.header.lbl_video_name.config(bg="#FFFFFF",fg="#000000")
+    form.header.lbl_videoName=tk.Label(form.header,text="選択動画： なし", width=50, anchor="w")
+    form.header.lbl_videoName.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5, pady=5)
+    form.header.lbl_videoName.config(bg="#FFFFFF",fg="#000000")
 
 
     # 画面サイズを変更するボタン
-    form.header.btn_size_minus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_size(form.set_size + 1))
-    form.header.btn_size_minus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_size_minus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
-        
-    form.header.btn_size_plus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_size(form.set_size - 1))
-    form.header.btn_size_plus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_size_plus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+    form.header.btn_sizeMinus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_VideoSize(form.col_size + 1))
+    form.header.btn_sizeMinus.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.header.btn_sizeMinus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
+    form.header.btn_sizePlus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_VideoSize(form.col_size - 1))
+    form.header.btn_sizePlus.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.header.btn_sizePlus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+
+
+
+    # ここからフッター部分の作成
     # 動画再生コントロールを設置するフッターを作成
     form.footer = tk.Frame(form)
     form.footer.pack(side=tk.BOTTOM, fill=tk.X)
@@ -87,55 +62,55 @@ def create_widgets(form):
     form.footer.pack(pady=5)
 
     # 巻き戻し
-    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=5, command=form.back)
+    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=5, command=form.rewind_Video)
     form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 一コマ戻す
-    form.footer.btn_frame_back = tk.Button(form.footer, text="|<", width=5, command=form.frame_back)
-    form.footer.btn_frame_back.pack(side=tk.LEFT, padx=5, pady=5)
+    form.footer.btn_frameBack = tk.Button(form.footer, text="|<", width=5, command=form.rewind_Flame)
+    form.footer.btn_frameBack.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 再生/一時停止
-    form.footer.btn_play_pause = tk.Button(form.footer, text="▶", width=10, command=form.toggle_play)
-    form.footer.btn_play_pause.pack(side=tk.LEFT, padx=5, pady=5)
+    form.footer.btn_playPause = tk.Button(form.footer, text="▶", width=10, command=form.change_PlayPause)
+    form.footer.btn_playPause.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 一コマ進む
-    form.footer.btn_frame_forward = tk.Button(form.footer, text=">|", width=5, command=form.frame_forward)
-    form.footer.btn_frame_forward.pack(side=tk.LEFT, padx=5, pady=5)
+    form.footer.btn_frameForward = tk.Button(form.footer, text=">|", width=5, command=form.forward_Flame)
+    form.footer.btn_frameForward.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 早送り
-    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=5, command=form.forward)
+    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=5, command=form.forward_Video)
     form.footer.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 進捗バーとタイムスタンプ
-    form.progress_bar = ttk.Progressbar(form.footer, orient="horizontal", length=300, mode="determinate")
-    form.progress_bar.pack(side=tk.LEFT, padx=5, pady=5)
+    form.prgbar_videoTime = ttk.Progressbar(form.footer, orient="horizontal", length=300, mode="determinate")
+    form.prgbar_videoTime.pack(side=tk.LEFT, padx=5, pady=5)
 
     form.lbl_timestamp = tk.Label(form.footer, text="00:00/00:00")
     form.lbl_timestamp.config(font=("Helvetica", 16))
     form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
         
     # 追加・削除ボタン
-    form.footer.mini_select_button = tk.Button(form.footer, text="追加", width=20, command=form.select_video)
-    form.footer.mini_select_button.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.footer.mini_select_button.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
+    form.footer.btn_addVideo = tk.Button(form.footer, text="追加", width=20, command=form.select_Video)
+    form.footer.btn_addVideo.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.footer.btn_addVideo.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    form.footer.btn_delete = tk.Button(form.footer, text="削除", width=20, command=lambda: delete_video(form, widgets=list(form.selected_label.keys())))
-    form.footer.btn_delete.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.footer.btn_delete.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
+    form.footer.btn_deleteVideo = tk.Button(form.footer, text="削除", width=20, command=lambda: delete_Video(form, del_Videos=list(form.selected_videos.keys())))
+    form.footer.btn_deleteVideo.pack(side=tk.RIGHT, padx=5, pady=5)
+    form.footer.btn_deleteVideo.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
         
     # 動画表示用のスクロール可能フレーム
-    form.canvas = tk.Canvas(form, bg="#2E2E2E")
-    form.scrollbar = tk.Scrollbar(form, orient="vertical", command=form.canvas.yview)
-    form.canvas.configure(yscrollcommand=form.scrollbar.set)
+    form.mainForm = tk.Canvas(form, bg="#2E2E2E")
+    form.scrbar_mainForm = tk.Scrollbar(form, orient="vertical", command=form.mainForm.yview)
+    form.mainForm.configure(yscrollcommand=form.scrbar_mainForm.set)
 
-    form.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    form.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    form.mainForm.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    form.scrbar_mainForm.pack(side=tk.RIGHT, fill=tk.Y)
 
-    # Canvas内にFrameを作成
-    form.video_frame = tk.Frame(form.canvas, bg="#2E2E2E")
-    form.canvas.create_window((0, 0), window=form.video_frame, anchor="nw")
+    # mainFormにフレームを作成
+    form.frm_setVideo = tk.Frame(form.mainForm, bg="#2E2E2E")
+    form.mainForm.create_window((0, 0), window=form.frm_setVideo, anchor="nw")
     
-    # Canvasサイズに合わせてスクロール領域を更新
-    def on_frame_configure(event):
-        form.canvas.configure(scrollregion=form.canvas.bbox("all"))
-    form.video_frame.bind("<Configure>", on_frame_configure)
+    # mainFormサイズに合わせてスクロール領域を更新
+    def updateScroll(event):
+        form.mainForm.configure(scrollregion=form.mainForm.bbox("all"))
+    form.frm_setVideo.bind("<Configure>", updateScroll)
