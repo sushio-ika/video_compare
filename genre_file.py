@@ -79,36 +79,47 @@ def selected_genre(form, genre):
 
 
 def check_genre(form):
-    """check_genre_list(0または1を格納)を参照し、動画の表示/非表示を切り替える"""
-    # いずれも未選択なら全表示
-    if not any(form.check_genre_list):
-        for path, info in form.video_info.items():
-            label = info.get('label')
-            if label:
-                label.grid()
+    """check_genre_list(0または1を格納)を参照し、動画の表示/非表示を切り替える。
+    表示するものは左上から順に詰めて grid 配置する。
+    """
+    # video_info がなければ何もしない
+    if not hasattr(form, "video_info") or not form.video_info:
         return
 
-    # 選択されているジャンル名の集合を作る
-    active_genres = {form.genre_list[i] for i, v in enumerate(form.check_genre_list) if v}
+    # いずれも未選択なら全表示（順序を詰める）
+    if not any(form.check_genre_list):
+        visible_items = list(form.video_info.items())
+    else:
+        # 選択されているジャンル名の集合を作る
+        active_genres = {form.genre_list[i] for i, v in enumerate(form.check_genre_list) if v}
+        # 表示対象のみ抽出（ジャンルが設定されていて active_genres に含まれるものを表示）                                   
+        visible_items = [
+            (path, info) for path, info in form.video_info.items()
+            if info.get('label') and info.get('genre') in active_genres
+        ]
 
-    # 各動画をチェックし、ジャンルが active_genres に含まれれば表示、そうでなければ非表示
+    # 非表示にするものは先にすべて隠す（透明扱い）
     for path, info in form.video_info.items():
-        label = info.get('label')
-        genre = info.get('genre')
-        grid_video = []
+        widget = info.get('container') or info.get('label')
+        if widget:
+            widget.grid_remove()
 
-        # 動画が存在しない場合
-        if not label:
+    # 表示対象を左上から詰めて配置
+    for idx, (path, info) in enumerate(visible_items):
+        widget = info.get('container') or info.get('label')
+        if not widget:
             continue
+        col = idx % getattr(form, 'set_size', 3)
+        row = idx // getattr(form, 'set_size', 3)
+        widget.grid(row=row, column=col, padx=5, pady=5)
 
-        # ジャンルが設定されていない場合は非表示
-        if genre is not None and genre in active_genres:
-            label.grid()
-            grid_video.append(info)
-        else:
-            label.grid_remove()
-
-        form.pack_video(grid_video)  # 動画を再配置
+    # 更新（必要ならスクロール領域などを更新）
+    if hasattr(form, "canvas") and hasattr(form, "video_frame"):
+        form.video_frame.update_idletasks()
+        try:
+            form.canvas.configure(scrollregion=form.canvas.bbox("all"))
+        except Exception:
+            pass
 
 def reset_genre(form):
     """ジャンル選択をリセットする"""

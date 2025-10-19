@@ -58,6 +58,11 @@ def create_widgets(form):
     form.header.genre_btn.pack(side=tk.LEFT,padx=5, pady=5)
     form.header.genre_btn.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
+    # 動画順序入れ替えボタン
+    form.header.btn_sort = tk.Button(form.header, text="並び替え", width=6, command=lambda: form.change_video_order())
+    form.header.btn_sort.pack(side=tk.LEFT, padx=5, pady=5)
+    form.header.btn_sort.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+
     # 選択中の動画名を画面中央に表示するラベル
     form.header.lbl_video_name=tk.Label(form.header,text="選択動画： なし", width=50, anchor="w")
     form.header.lbl_video_name.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5, pady=5)

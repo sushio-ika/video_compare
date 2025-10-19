@@ -357,10 +357,21 @@ class main(TkinterDnD.Tk):
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
 
-    def pack_video(form, video_list):
+    def pack_video(form):
         """動画表示エリアの動画を再配置する関数"""
-        
-                
+        # videoID でソート
+        sorted_videos = sorted(
+            form.video_info.items(),
+            key=lambda x: x[1]['videoID']
+        )
+
+        # ソートされた順番で再配置
+        for idx, (file_path, info) in enumerate(sorted_videos):
+            label = info['label']
+            col = idx % form.set_size
+            row = idx // form.set_size
+            label.grid(row=row, column=col, padx=5, pady=5)
+
     def play_video(form, capture, video_label, stop_flag, file_path):
         """動画を再生する関数"""
         while not stop_flag.is_set():
@@ -520,6 +531,9 @@ class main(TkinterDnD.Tk):
         # ジャンル設定を反映
         check_genre(form)
 
+        # 動画を再配置
+        form.pack_video()
+
     def scrollbar_set(form, point):
         # 任意の位置までスクロールバーを移動
         form.canvas.yview_moveto(point)
@@ -549,8 +563,29 @@ class main(TkinterDnD.Tk):
                 file_path += path
         return file_path
         
+    def change_video_order(form):
+        print(len(form.selected_label))
+        if len(form.selected_label) != 2:
+            messagebox.showinfo("情報", "2つの動画を選択してください。")
+            return
+        else:
+            # 2つの動画の順序を入れ替え
+            labels = list(form.selected_label.keys())
+            file_paths = []
+            for label in labels:
+                for path, info in form.video_info.items():
+                    if info['label'] == label:
+                        file_paths.append(path)
+            # videoIDを入れ替え
+            id1 = form.video_info[file_paths[0]]['videoID']
+            id2 = form.video_info[file_paths[1]]['videoID']
+            form.video_info[file_paths[0]]['videoID'] = id2
+            form.video_info[file_paths[1]]['videoID'] = id1
 
-                        
+        # 動画を再配置
+        form.pack_video()
+
+
 if __name__ == '__main__':
     app = main()
     app.mainloop()

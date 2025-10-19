@@ -93,10 +93,11 @@ def left_click(form, event, ctrl_click):
 
                 # ジャンルが設定されていれば表示
                 genre = form.video_info.get(file_path, {}).get('genre')
+                vid=form.video_info[file_path]['videoID']
                 if genre:
                     form.header.lbl_video_name.config(text=f"選択動画： [{genre}] {file_name}")
                 else:
-                    form.header.lbl_video_name.config(text=f"選択動画： {file_name}")
+                    form.header.lbl_video_name.config(text=f"選択動画： [{vid}] {file_name}")
 
                 info = form.video_info[file_path]
                 capture = info['capture']
@@ -118,7 +119,7 @@ def left_click(form, event, ctrl_click):
         else:
 
             # フッターとヘッダー（一部）のアイテムは例外
-            if widget not in [form.footer.btn_rewind, form.footer.btn_frame_back, form.footer.btn_play_pause, form.footer.btn_frame_forward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name]:
+            if widget not in [form.footer.btn_rewind, form.footer.btn_frame_back, form.footer.btn_play_pause, form.footer.btn_frame_forward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_delete, form.header.btn_size_minus, form.header.btn_size_plus, form.header.lbl_video_name,form.header.btn_sort]:
                 form.stop_video()
                 form.change_control_mode(tk.DISABLED)
                 reset_all_highlights(form)
