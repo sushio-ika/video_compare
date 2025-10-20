@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk
 import os
 from log_file import(add_log)
 
-def genre_box(form):
+def show_GenreWindow(form):
     """ジャンル選択メニューを表示"""
     class genre_checkbutton(tk.Checkbutton):
         def __init__(self, master, label, variable, command):
@@ -89,7 +89,7 @@ def genre_box(form):
             form.genre_checkedList[genre_index] = 1
         else:
             form.genre_checkedList[genre_index] = 0
-        check_genre(form)
+        check_Genre(form)
 
     def add_menu():
         return
@@ -107,11 +107,11 @@ def popup_select_genre(form):
     new_window.geometry(f"+{x}+{y}")
    
     def on_confirm():
-        selected_genre(form, form.genre_var.get())  # ジャンル設定
+        set_Genre(form, form.genre_var.get())  # ジャンル設定
         new_window.destroy()  # ウィンドウを閉じる
 
     def on_clear():
-        selected_genre(form, None)  # ジャンル設定解除
+        set_Genre(form, None)  # ジャンル設定解除
         new_window.destroy()  # ウィンドウを閉じる
 
 
@@ -133,7 +133,7 @@ def popup_select_genre(form):
     btn_close = ttk.Button(new_window, text="閉じる", command=new_window.destroy)
     btn_close.pack(pady=10)
 
-def selected_genre(form, genre):
+def set_Genre(form, genre):
     """選択された一つ以上の動画にジャンルを設定する"""
     # 念のため
     if len(form.selected_videos) < 1:
@@ -171,10 +171,8 @@ def selected_genre(form, genre):
                 form.header.lbl_videoName.config(text=f"選択動画： [{genre}] {file_name}")
 
 
-def check_genre(form):
-    """genre_checkedList(0または1を格納)を参照し、動画の表示/非表示を切り替える。
-    表示するものは左上から順に詰めて grid 配置する。
-    """
+def check_Genre(form):
+    """genre_checkedList(0または1を格納)を参照し、動画の表示/非表示を切り替える。    """
     # all_videos がなければ何もしない
     if not hasattr(form, "all_videos") or not form.all_videos:
         return
@@ -213,7 +211,7 @@ def check_genre(form):
         except Exception:
             pass
 
-def reset_genre(form):
+def reset_Genre(form):
     """ジャンル選択をリセットする"""
     form.var_walk.set(0)
     form.var_run.set(0)
@@ -222,4 +220,4 @@ def reset_genre(form):
     form.var_face.set(0)
     form.var_action.set(0)
     form.genre_checkedList = [0, 0, 0, 0, 0, 0]
-    check_genre(form)
+    check_Genre(form)

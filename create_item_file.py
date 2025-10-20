@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
 
 from menu_file import(delete_Video,show_LogWindow,show_FileWindow)
-from genre_file import(check_genre,genre_box)
+from genre_file import(show_GenreWindow)
 from log_file import(add_log)
 
 def create_widgets(form):
@@ -26,7 +26,7 @@ def create_widgets(form):
     form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
     # ジャンル選択ボタン
-    form.header.btn_genre = tk.Button(form.header, text="ジャンル", command=lambda: genre_box(form))
+    form.header.btn_genre = tk.Button(form.header, text="ジャンル", command=lambda: show_GenreWindow(form))
     form.header.btn_genre.pack(side=tk.LEFT,padx=5, pady=5)
     form.header.btn_genre.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 

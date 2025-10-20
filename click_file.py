@@ -153,6 +153,7 @@ def right_clickmenu(form, event):
     if widget in form.selected_videos:
         menu=tk.Menu(form,tearoff=0)
         menu.add_command(label="ジャンル", command=lambda: popup_select_genre(form))
+        menu.add_command(label="メディアで再生",command=lambda: form.play_MediaPlayer())
         menu.add_separator()
         menu.add_command(label="コピー", command=lambda: copy_Video(form))
         menu.add_command(label="切り取り", command=lambda: cut_Video(form))

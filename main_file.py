@@ -4,6 +4,8 @@ import cv2
 from PIL import Image, ImageTk
 import threading
 import os
+import subprocess
+import shutil
 from tkinterdnd2 import TkinterDnD
 import time
 
@@ -11,7 +13,7 @@ from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_Do
 from create_item_file import (create_widgets)
 from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video)
 from log_file import(add_log, init_log)
-from genre_file import(check_genre)
+from genre_file import(check_Genre)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -529,7 +531,7 @@ class main(TkinterDnD.Tk):
             form.header.btn_sizePlus.config(state=tk.NORMAL)
 
         # ジャンル設定を反映
-        check_genre(form)
+        check_Genre(form)
 
         # 動画を再配置
         form.relocate_Video()
@@ -599,6 +601,25 @@ class main(TkinterDnD.Tk):
 
         # 動画を再配置
         form.relocate_Video()
+
+    def play_MediaPlayer(form):
+        """Windowsメディアプレーヤーで動画を再生する"""
+        if len(form.selected_videos)!=1:
+            messagebox.showinfo("情報","一つの動画を選択してください")
+            return
+        
+        file_path=form.get_Filepath()
+            
+        if not os.path.exists(file_path):
+            messagebox.showerror("エラー", f"ファイルが見つかりません: {file_path}")
+            return
+
+        try:
+            os.startfile(file_path)
+            add_log(f"play_MediaPlayer: 実行 {file_path}")
+        except Exception as e:
+            add_log(f"play_MediaPlayer エラー: {e}")
+            messagebox.showerror("エラー", f"再生に失敗しました: {e}")
 
 
 if __name__ == '__main__':
