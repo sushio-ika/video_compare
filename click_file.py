@@ -117,6 +117,9 @@ def click_Left(form, event, click_ctrl):
                 form.lbl_timestamp.config(text="00:00/00:00")
                 form.stop_Video()
 
+        # 再生時間をクリックした場合
+        elif widget in [form.lbl_timestamp]:
+            form.change_TimeFrame()
 
         #動画以外をクリックした場合
         else:
@@ -129,6 +132,7 @@ def click_Left(form, event, click_ctrl):
                 form.selected_videos.clear() # 全てクリア
                 form.header.lbl_videoName.config(text="選択動画： なし")
                 form.lbl_timestamp.config(text="00:00/00:00")
+        
 
 def clear_AllvideoHighlights(form):
     """全ての動画のハイライトをリセットする"""

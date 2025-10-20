@@ -40,6 +40,7 @@ class main(TkinterDnD.Tk):
         form.col_size = 3 # デフォルトの動画表示の列数(1<=x<=5)
         form.stop_flag = None
         form.video_state = True  # 動画の再生/一時停止状態
+        form.timeframe=True
 
         # ジャンルを選択するメニュー
         form.var_walk = tk.BooleanVar(form)
@@ -118,8 +119,8 @@ class main(TkinterDnD.Tk):
         stop_flag = info['stop_flag']
 
         # 5秒巻き戻し
-        frames = int(capture.get(cv2.CAP_PROP_FPS) * -5)
-        form.control_Video(capture, video_label, file_path, frames)
+        total_frames = int(capture.get(cv2.CAP_PROP_FPS) * -5)
+        form.control_Video(capture, video_label, file_path, total_frames)
     
     def rewind_Flame(form):
         """1フレーム巻き戻す"""
@@ -179,10 +180,10 @@ class main(TkinterDnD.Tk):
         stop_flag = info['stop_flag']
 
         # 5秒早送り
-        frames = int(capture.get(cv2.CAP_PROP_FPS) * 5)
-        form.control_Video(capture, video_label, file_path, frames)
+        total_frames = int(capture.get(cv2.CAP_PROP_FPS) * 5)
+        form.control_Video(capture, video_label, file_path, total_frames)
 
-    def control_Video(form, capture, video_label, file_path, frames):
+    def control_Video(form, capture, video_label, file_path, total_frames):
         """動画を指定されたフレーム分移動する関数"""
         # 再生中なら一時停止
         if not form.video_state:
@@ -194,7 +195,7 @@ class main(TkinterDnD.Tk):
         # 現在のフレーム位置を取得し、指定されたフレーム数だけ移動
         current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
         total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        new_frame = current_frame + frames
+        new_frame = current_frame + total_frames
 
         ret, frame = capture.read()
         new_frame = max(0, min(new_frame, total_frames - 1))  # 範囲内に制限
@@ -253,37 +254,6 @@ class main(TkinterDnD.Tk):
             form.video_state = True
             form.footer.btn_playPause.config(text="▶")
             form.stop_Video()
-
-    def update_Timestamp(form, file_path):
-        """選択中の動画のタイムスタンプを更新する関数"""
-        if file_path not in form.all_videos:
-            form.lbl_timestamp.config(text="00:00/00:00")
-            return
-
-        capture = form.all_videos[file_path]['capture']
-        
-        # 現在のフレーム位置と総フレーム数、FPSを取得
-        current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
-        total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = capture.get(cv2.CAP_PROP_FPS)
-
-        if fps == 0:
-            form.lbl_timestamp.config(text="00:00/00:00")
-            return
-
-        # 現在の再生時間（秒）を計算
-        current_time = current_frame / fps
-        total_time = total_frames / fps
-        
-        current_minutes = int(current_time // 60)
-        current_seconds = int(current_time % 60)
-        total_minutes = int(total_time // 60)
-        total_seconds = int(total_time % 60)
-        
-        form.lbl_timestamp.config(text=f"{current_minutes:02d}:{current_seconds:02d}/{total_minutes:02d}:{total_seconds:02d}")
-        form.prgbar_videoTime['maximum'] = total_frames
-        form.prgbar_videoTime['value'] = current_frame
-        
 
     def drop_File(form, event):
         """ドロップされたファイルを処理する関数"""
@@ -441,29 +411,93 @@ class main(TkinterDnD.Tk):
         form.footer.btn_playPause.config(text="▶")
         form.update_Timestamp(file_path)
 
+    def update_Timestamp(form, file_path):
+        """選択中の動画のタイムスタンプを更新する関数"""
+        if form.timeframe:
+            if file_path not in form.all_videos:
+                form.lbl_timestamp.config(text="00:00/00:00")
+                return
+
+            capture = form.all_videos[file_path]['capture']
+        
+            # 現在のフレーム位置と総フレーム数、FPSを取得
+            current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = capture.get(cv2.CAP_PROP_FPS)
+
+            if fps == 0:
+                form.lbl_timestamp.config(text="00:00/00:00")
+                return
+
+            # 現在の再生時間（秒）を計算
+            current_time = current_frame / fps
+            total_time = total_frames / fps
+        
+            current_minutes = int(current_time // 60)
+            current_seconds = int(current_time % 60)
+            total_minutes = int(total_time // 60)
+            total_seconds = int(total_time % 60)
+        
+            form.lbl_timestamp.config(text=f"{current_minutes:02d}:{current_seconds:02d}/{total_minutes:02d}:{total_seconds:02d}")
+            form.prgbar_videoTime['maximum'] = total_frames
+            form.prgbar_videoTime['value'] = current_frame
+        else:
+            if file_path not in form.all_videos:
+                form.lbl_timestamp.config(text="0/0")
+                return
+
+            capture = form.all_videos[file_path]['capture']
+        
+            # 現在のフレーム位置と総フレーム数、FPSを取得
+            current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+            form.lbl_timestamp.config(text=f"{current_frame:d}/{total_frames:d}")
+            form.prgbar_videoTime['maximum'] = total_frames
+            form.prgbar_videoTime['value'] = current_frame
+
 
     def get_VideoTime(form, file_path):
         """指定された動画の再生時間情報を返す"""
-        # 動画が存在しない場合
-        if file_path not in form.all_videos:
-            return "00:00/00:00"
+        if form.timeframe:
+            # 動画が存在しない場合
+            if file_path not in form.all_videos:
+                return "00:00/00:00"
 
-        capture = form.all_videos[file_path]['capture']
+            capture = form.all_videos[file_path]['capture']
         
-        # 総フレーム数とFPSを取得
-        frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = capture.get(cv2.CAP_PROP_FPS)
+            # 総フレーム数とFPSを取得
+            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = capture.get(cv2.CAP_PROP_FPS)
 
-        if fps == 0:
-            return "00:00/00:00"
+            if fps == 0:
+                return "00:00/00:00"
 
-        # 総再生時間（秒）を計算
-        total_time = frames / fps
+            # 総再生時間（秒）を計算
+            total_time = total_frames / fps
         
-        total_minutes = int(total_time // 60)
-        total_seconds = int(total_time % 60)
+            total_minutes = int(total_time // 60)
+            total_seconds = int(total_time % 60)
         
-        return f"00:00/{total_minutes:02d}:{total_seconds:02d}"
+            return f"00:00/{total_minutes:02d}:{total_seconds:02d}"
+        else:
+            # 動画が存在しない場合
+            if file_path not in form.all_videos:
+                return "0/0"
+
+            capture = form.all_videos[file_path]['capture']
+        
+            # 総フレーム数とFPSを取得
+            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+                
+            return f"0/{total_frames}"
+
+    def change_TimeFrame(form):
+        if form.timeframe==True:
+            form.timeframe=False
+        else:
+            form.timeframe=True
+        
 
     def change_VideoState(form, state):
         """動画再生コントロールの有効/無効を切り替える関数"""
@@ -615,9 +649,7 @@ class main(TkinterDnD.Tk):
 
         try:
             os.startfile(file_path)
-            add_log(f"play_MediaPlayer: 実行 {file_path}")
         except Exception as e:
-            add_log(f"play_MediaPlayer エラー: {e}")
             messagebox.showerror("エラー", f"再生に失敗しました: {e}")
 
 
