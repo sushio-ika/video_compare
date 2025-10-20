@@ -359,7 +359,7 @@ class main(TkinterDnD.Tk):
         #    form.lbl_hint.pack_forget()
 
     def relocate_Video(form):
-        """動画表示エリアの動画を再配置する関数"""
+        """動画表示エリアの動画を再配置する関数(並び替え時使用)"""
         # videoID でソート
         sorted_videos = sorted(
             form.all_videos.items(),
@@ -530,11 +530,10 @@ class main(TkinterDnD.Tk):
             form.header.btn_sizeMinus.config(state=tk.NORMAL)
             form.header.btn_sizePlus.config(state=tk.NORMAL)
 
+
         # ジャンル設定を反映
         check_Genre(form)
 
-        # 動画を再配置
-        form.relocate_Video()
 
     def move_Scrollbar(form, point):
         # 任意の位置までスクロールバーを移動
