@@ -5,10 +5,24 @@ from log_file import(add_log)
 
 def show_GenreWindow(form):
     """ジャンル選択メニューを表示"""
-    class genre_checkbutton(tk.Checkbutton):
-        def __init__(self, master, label, variable, command):
-            super().__init__(master, text=label, variable=variable, command=command)
-            self.config(bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+    def set_genre(genre_index):
+        # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
+        if form.genre_checkedList[genre_index] == 0:
+            form.genre_checkedList[genre_index] = 1
+        else:
+            form.genre_checkedList[genre_index] = 0
+        check_Genre(form)
+
+    def add_Genre():
+        txt=form.genre_window.txtbox_addgenre.get(1.0,"end-1c")
+        if txt==None:
+            messagebox.showerror("エラー","新ジャンル名を入力してください")
+            return
+        
+        form.genre_list.append(txt)
+        form.genre_checkedList.append(0)
+        show_GenreWindow(form)
+
 
     if hasattr(form, 'genre_window') and form.genre_window.winfo_exists():
         form.genre_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
@@ -19,8 +33,14 @@ def show_GenreWindow(form):
     form.genre_window.overrideredirect(True)
     form.genre_window.resizable(False,False)
     form.genre_window.focus_set()
-    form.genre_window.bind("<FocusOut>", lambda event:form.genre_window.destroy())
-    
+
+    def on_focusout(event):
+        if event.widget is form.genre_window:
+            return
+        form.genre_window.destroy()
+        
+    form.genre_window.bind("<FocusOut>", on_focusout)
+        
     # メインウィンドウのレイアウト情報を確実に取得する
     form.update_idletasks()
 
@@ -59,40 +79,30 @@ def show_GenreWindow(form):
     if not hasattr(form, 'genre_checkedList'):
         form.genre_checkedList = [0, 0, 0, 0, 0, 0]
 
-    form.genre_window.chbtn_walk=genre_checkbutton(form.genre_window, label=form.genre_list[0], variable=form.var_walk, command=lambda: set_genre(0))
-    form.genre_window.chbtn_walk.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.chbtn_run=genre_checkbutton(form.genre_window, label=form.genre_list[1], variable=form.var_run, command=lambda: set_genre(1))
-    form.genre_window.chbtn_run.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.chbtn_up=genre_checkbutton(form.genre_window, label=form.genre_list[2], variable=form.var_up, command=lambda: set_genre(2))
-    form.genre_window.chbtn_up.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.chbtn_throw=genre_checkbutton(form.genre_window, label=form.genre_list[3], variable=form.var_throw, command=lambda: set_genre(3))
-    form.genre_window.chbtn_throw.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.chbtn_face=genre_checkbutton(form.genre_window, label=form.genre_list[4], variable=form.var_face, command=lambda: set_genre(4))
-    form.genre_window.chbtn_face.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.chbtn_action=genre_checkbutton(form.genre_window, label=form.genre_list[5], variable=form.var_action, command=lambda: set_genre(5))
-    form.genre_window.chbtn_action.pack(side=tk.TOP, padx=5, pady=5)
-
-    form.genre_window.txtbox_addgenre=tk.Text(form.genre_window, height=4, width=40)
-    form.genre_window.txtbox_addgenre.pack(side=tk.TOP, padx=5, pady=5)
+    chb_frame = tk.Frame(form.genre_window, bg="#000000")
+    chb_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     
-    form.genre_window.btn_addgenre=tk.Button(form.genre_window, text="追加", command=lambda: add_menu())
-    form.genre_window.btn_addgenre.pack(side=tk.TOP, padx=5, pady=5)
+    for i in range(3):
+        chb_frame.grid_columnconfigure(i, weight=1)
 
-    def set_genre(genre_index):
-        # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
-        if form.genre_checkedList[genre_index] == 0:
-            form.genre_checkedList[genre_index] = 1
-        else:
-            form.genre_checkedList[genre_index] = 0
-        check_Genre(form)
+    for i, content in enumerate(form.genre_list):
+        row = i // 3  # 行番号
+        col = i % 3   # 列番号
+        
+        chb = tk.Checkbutton(chb_frame, text=content, command=lambda x=i: set_genre(x))
+        chb.config(font=("Helvetica", 12),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+        chb.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
 
-    def add_menu():
-        return
+    # テキストボックスと追加ボタンを下部に配置
+    bottom_frame = tk.Frame(form.genre_window, bg="#000000")
+    bottom_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
+
+    form.genre_window.txtbox_addgenre = tk.Text(bottom_frame, height=1, width=30)
+    form.genre_window.txtbox_addgenre.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
+    
+    form.genre_window.btn_addgenre = tk.Button(bottom_frame, text="追加", command=lambda: add_Genre())
+    form.genre_window.btn_addgenre.pack(side=tk.RIGHT)
+  
 
 
 def popup_select_genre(form):
@@ -132,6 +142,32 @@ def popup_select_genre(form):
     # 閉じるボタンを作成
     btn_close = ttk.Button(new_window, text="閉じる", command=new_window.destroy)
     btn_close.pack(pady=10)
+    
+    rb_frame = tk.Frame(new_window, bg="#000000")
+    rb_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    
+    for i in range(3):
+        rb_frame.grid_columnconfigure(i, weight=1)
+
+    form.genre_var = tk.StringVar(value=form.genre_list[0])
+    
+    for i, content in enumerate(form.genre_list):
+        row = i // 3  # 行番号
+        col = i % 3   # 列番号
+        
+        rb = tk.Radiobutton(rb_frame, text=content, variable=form.genre_var, value=genre, command=lambda x=i: set_genre(x))
+        rb.config(font=("Helvetica", 12),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+        rb.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
+
+    # テキストボックスと追加ボタンを下部に配置
+    bottom_frame = tk.Frame(form.genre_window, bg="#000000")
+    bottom_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
+
+    form.genre_window.txtbox_addgenre = tk.Text(bottom_frame, height=1, width=30)
+    form.genre_window.txtbox_addgenre.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
+    
+    form.genre_window.btn_addgenre = tk.Button(bottom_frame, text="追加", command=lambda: add_Genre())
+    form.genre_window.btn_addgenre.pack(side=tk.RIGHT)
 
 def set_Genre(form, genre):
     """選択された一つ以上の動画にジャンルを設定する"""

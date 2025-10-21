@@ -82,11 +82,11 @@ class main(TkinterDnD.Tk):
         form.bind_all("<Control-c>", lambda event: copy_Video(form)) #コピー
         form.bind_all("<Control-x>", lambda event: cut_Video(form)) #カット
         form.bind_all("<Control-v>", lambda event: paste_Video(form)) #ペースト
-        form.bind_all("<BackSpace>", lambda event: delete_Video(form)) #削除
+        form.bind_all("<Delete>", lambda event: delete_Video(form)) #削除
 
         form.change_VideoSize(form.col_size)
         form.change_VideoState(tk.DISABLED)
-        form.change_SelectvideoState(tk.DISABLED)
+        form.change_ExistvideoState(tk.DISABLED)
         
         init_log()
 
@@ -116,11 +116,10 @@ class main(TkinterDnD.Tk):
         info = form.all_videos[file_path]
         capture = info['capture']
         video_label = info['label']
-        stop_flag = info['stop_flag']
 
         # 5秒巻き戻し
-        total_frames = int(capture.get(cv2.CAP_PROP_FPS) * -5)
-        form.control_Video(capture, video_label, file_path, total_frames)
+        frames = int(capture.get(cv2.CAP_PROP_FPS) * -5)
+        form.control_Video(capture, video_label, file_path, frames)
     
     def rewind_Flame(form):
         """1フレーム巻き戻す"""
@@ -137,7 +136,6 @@ class main(TkinterDnD.Tk):
         info = form.all_videos[file_path]
         capture = info['capture']
         video_label = info['label']
-        stop_flag = info['stop_flag']
 
         # 1フレーム巻き戻し
         form.control_Video(capture, video_label, file_path, -1)
@@ -157,7 +155,6 @@ class main(TkinterDnD.Tk):
         info = form.all_videos[file_path]
         capture = info['capture']
         video_label = info['label']
-        stop_flag = info['stop_flag']
 
         # 1フレーム早送り
         form.control_Video(capture, video_label, file_path, 1)
@@ -177,13 +174,12 @@ class main(TkinterDnD.Tk):
         info = form.all_videos[file_path]
         capture = info['capture']
         video_label = info['label']
-        stop_flag = info['stop_flag']
 
         # 5秒早送り
-        total_frames = int(capture.get(cv2.CAP_PROP_FPS) * 5)
-        form.control_Video(capture, video_label, file_path, total_frames)
+        frames = int(capture.get(cv2.CAP_PROP_FPS) * 5)
+        form.control_Video(capture, video_label, file_path, frames)
 
-    def control_Video(form, capture, video_label, file_path, total_frames):
+    def control_Video(form, capture, video_label, file_path, frames):
         """動画を指定されたフレーム分移動する関数"""
         # 再生中なら一時停止
         if not form.video_state:
@@ -195,7 +191,7 @@ class main(TkinterDnD.Tk):
         # 現在のフレーム位置を取得し、指定されたフレーム数だけ移動
         current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
         total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        new_frame = current_frame + total_frames
+        new_frame = current_frame + frames
 
         ret, frame = capture.read()
         new_frame = max(0, min(new_frame, total_frames - 1))  # 範囲内に制限
@@ -322,7 +318,7 @@ class main(TkinterDnD.Tk):
             img_tk = ImageTk.PhotoImage(img)
             form.update_Image(video_label, img_tk)
 
-        form.change_SelectvideoState(tk.NORMAL)
+        form.change_ExistvideoState(tk.NORMAL)
 
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
@@ -499,23 +495,24 @@ class main(TkinterDnD.Tk):
             form.timeframe=True
         
 
-    def change_VideoState(form, state):
+    def change_VideoState(form, vstate):
         """動画再生コントロールの有効/無効を切り替える関数"""
-        form.footer.btn_rewind.config(state=state)
-        form.footer.btn_frameBack.config(state=state)
-        form.footer.btn_playPause.config(state=state)
-        form.footer.btn_frameForward.config(state=state)
-        form.footer.btn_skip.config(state=state)
-        form.lbl_timestamp.config(state=state)
+        form.footer.btn_rewind.config(state=vstate)
+        form.footer.btn_frameBack.config(state=vstate)
+        form.footer.btn_playPause.config(state=vstate)
+        form.footer.btn_frameForward.config(state=vstate)
+        form.footer.btn_skip.config(state=vstate)
+        form.lbl_timestamp.config(state=vstate)
         form.lbl_timestamp.config(text="00:00/00:00")
 
-    def change_SelectvideoState(form,state):
-        """選択状態の動画ウィジェットの有効/無効を切り替える関数"""
+    def change_ExistvideoState(form,vstate):
+        """動画が存在しない場合の動画ウィジェットの有効/無効を切り替える関数"""
         form.header.lbl_videoName.config(text="選択動画： なし")
-        form.header.lbl_videoName.config(state=state)
-        form.header.btn_sizeMinus.config(state=state)
-        form.header.btn_sizePlus.config(state=state)
-        form.header.btn_genre.config(state=state)
+        form.header.lbl_videoName.config(state=vstate)
+        form.header.btn_sizeMinus.config(state=vstate)
+        form.header.btn_sizePlus.config(state=vstate)
+        form.header.btn_genre.config(state=vstate)
+        form.header.btn_sort.config(state=vstate)
 
     def update_Image(form, video_label, img_tk):
         """ラベルの画像を更新する関数"""

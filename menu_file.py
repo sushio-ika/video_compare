@@ -110,7 +110,7 @@ def delete_Video(form, del_Videos=None):
     if not form.all_videos:
         form.change_VideoSize(form.col_size)
         form.change_VideoState(tk.DISABLED)
-        form.change_SelectvideoState(tk.DISABLED)
+        form.change_ExistvideoState(tk.DISABLED)
 
     
 
@@ -154,8 +154,14 @@ def show_LogWindow(form):
     form.log_window.overrideredirect(True)
     form.log_window.resizable(False,False)
     form.log_window.focus_set()
-    form.log_window.bind("<FocusOut>", lambda event:form.log_window.destroy())
     
+    def on_focusout(event):
+        if event.widget is form.log_window:
+            return
+        form.log_window.destroy()
+    
+    form.log_window.bind("<FocusOut>", on_focusout)
+
     form.update_idletasks()
 
     # ログウィンドウの幅と高さを計算
@@ -201,7 +207,13 @@ def show_FileWindow(form):
     form.file_window.overrideredirect(True)
     form.file_window.resizable(False,False)
     form.file_window.focus_set()
-    form.file_window.bind("<FocusOut>", lambda event:form.file_window.destroy())
+    
+    def on_focusout(event):
+        if event.widget is form.file_window:
+            return
+        form.file_window.destroy()
+    
+    form.file_window.bind("<FocusOut>", on_focusout)
     
     form.update_idletasks()
 
