@@ -319,6 +319,7 @@ class main(TkinterDnD.Tk):
             form.update_Image(video_label, img_tk)
 
         form.change_ExistvideoState(tk.NORMAL)
+        check_Genre(form)
 
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
@@ -648,7 +649,7 @@ class main(TkinterDnD.Tk):
             os.startfile(file_path)
         except Exception as e:
             messagebox.showerror("エラー", f"再生に失敗しました: {e}")
-
+    
 
 if __name__ == '__main__':
     app = main()

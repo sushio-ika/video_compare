@@ -3,25 +3,42 @@ from tkinter import messagebox, ttk
 import os
 from log_file import(add_log)
 
+MAX_GENRE=30
+
+def set_genre(form, genre_index):
+    # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
+    if form.genre_checkedList[genre_index] == 0:
+        form.genre_checkedList[genre_index] = 1
+    else:
+        form.genre_checkedList[genre_index] = 0
+    check_Genre(form)
+
+def add_Genre(form,listbox):
+    txt = form.new_window.txtbox_addgenre.get().strip()
+
+    if not txt:
+        messagebox.showinfo("情報", "追加するジャンル名を入力してください。")
+        return
+    
+    if len(form.genre_list)>=MAX_GENRE:
+        messagebox.showinfo("情報","ジャンル数が最大に達しました。\n追加するには、いずれかを削除してください")
+        return
+    
+    if txt in form.genre_list:
+        messagebox.showinfo("情報", "既に同名のジャンルが存在します。")
+        return
+    
+    form.genre_list.append(txt)
+    form.genre_checkedList.append(0)
+
+    # リストを更新
+    listbox.insert(tk.END, txt)
+    form.new_window.txtbox_addgenre.delete(0, tk.END)
+
+
 def show_GenreWindow(form):
     """ジャンル選択メニューを表示"""
-    def set_genre(genre_index):
-        # genre_indexに対応したチェックボックスが未選択なら0、選択中なら1をリストに保存
-        if form.genre_checkedList[genre_index] == 0:
-            form.genre_checkedList[genre_index] = 1
-        else:
-            form.genre_checkedList[genre_index] = 0
-        check_Genre(form)
 
-    def add_Genre():
-        txt=form.genre_window.txtbox_addgenre.get(1.0,"end-1c")
-        if txt==None:
-            messagebox.showerror("エラー","新ジャンル名を入力してください")
-            return
-        
-        form.genre_list.append(txt)
-        form.genre_checkedList.append(0)
-        show_GenreWindow(form)
 
 
     if hasattr(form, 'genre_window') and form.genre_window.winfo_exists():
@@ -32,7 +49,6 @@ def show_GenreWindow(form):
     form.genre_window.configure(bg="#000000")
     form.genre_window.overrideredirect(True)
     form.genre_window.resizable(False,False)
-    form.genre_window.focus_set()
 
     def on_focusout(event):
         if event.widget is form.genre_window:
@@ -63,25 +79,23 @@ def show_GenreWindow(form):
     form.genre_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
 
     # ここからメイン処理
-    # 念のため
-    if not hasattr(form, 'var_walk'):
-        form.var_walk = tk.IntVar(value=0)
-    if not hasattr(form, 'var_run'):
-        form.var_run = tk.IntVar(value=0)
-    if not hasattr(form, 'var_up'):
-        form.var_up = tk.IntVar(value=0)
-    if not hasattr(form, 'var_throw'):
-        form.var_throw = tk.IntVar(value=0)
-    if not hasattr(form, 'var_face'):
-        form.var_face = tk.IntVar(value=0)
-    if not hasattr(form, 'var_action'):
-        form.var_action = tk.IntVar(value=0)
-    if not hasattr(form, 'genre_checkedList'):
-        form.genre_checkedList = [0, 0, 0, 0, 0, 0]
+
+    def check_all(form, chflg):
+        if chflg:
+            form.genre_checkedList[1]*len(form.genre_checkedList)
+        else:
+            form.genre_checkedList[0]*len(form.genre_checkedList)
+
+
+    btn_allCheck=tk.Button(chb_frame,text="全選択", width=8, command=check_all(form, True))
+    btn_allCheck.pack(side=tk.LEFT,padx=(0,6))
+    btn_allRemove=tk.Button(chb_frame,text="全解除", width=8, command=check_all(form, False))
+    btn_allRemove.pack(side=tk.LEFT,padx=(0,6))
 
     chb_frame = tk.Frame(form.genre_window, bg="#000000")
     chb_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-    
+    chb_frame.focus_set()
+
     for i in range(3):
         chb_frame.grid_columnconfigure(i, weight=1)
 
@@ -89,85 +103,98 @@ def show_GenreWindow(form):
         row = i // 3  # 行番号
         col = i % 3   # 列番号
         
-        chb = tk.Checkbutton(chb_frame, text=content, command=lambda x=i: set_genre(x))
-        chb.config(font=("Helvetica", 12),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+        chb = tk.Checkbutton(chb_frame, text=content,variable=content, command=lambda x=i: set_genre(form, x))
+        chb.config(font=("Helvetica", 8),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
         chb.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
 
-    # テキストボックスと追加ボタンを下部に配置
-    bottom_frame = tk.Frame(form.genre_window, bg="#000000")
-    bottom_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
+        if form.genre_checkedList[i]==1:
+            content.set(1)
 
-    form.genre_window.txtbox_addgenre = tk.Text(bottom_frame, height=1, width=30)
-    form.genre_window.txtbox_addgenre.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
-    
-    form.genre_window.btn_addgenre = tk.Button(bottom_frame, text="追加", command=lambda: add_Genre())
-    form.genre_window.btn_addgenre.pack(side=tk.RIGHT)
-  
 
 
 def popup_select_genre(form):
     """ジャンル選択の処理"""
-    new_window = tk.Toplevel(form)
-    new_window.title("ジャンル選択画面")
-    new_window.geometry("500x400")
-    new_window.resizable(False, False)
+    form.new_window = tk.Toplevel(form)
+    form.new_window.title("ジャンル選択画面")
+    form.new_window.geometry("500x400")
+    form.new_window.resizable(False, False)
 
-    x = (new_window.winfo_screenwidth() - 500) // 2
-    y = (new_window.winfo_screenheight() - 400) // 2
-    new_window.geometry(f"+{x}+{y}")
+    x = (form.new_window.winfo_screenwidth() - 500) // 2
+    y = (form.new_window.winfo_screenheight() - 400) // 2
+    form.new_window.geometry(f"+{x}+{y}")
    
+    list_frame = tk.Frame(form.new_window)
+    list_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+    lb = tk.Listbox(list_frame, selectmode=tk.SINGLE, exportselection=False, font=("Helvetica", 11))
+    sb = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=lb.yview)
+    lb.config(yscrollcommand=sb.set)
+    lb.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+    sb.pack(side=tk.RIGHT, fill=tk.Y)
+    lb.focus_set()
+
+    # リストにジャンルを挿入
+    for genre in form.genre_list:
+        lb.insert(tk.END, genre)
+
+    try:
+        initial_genre = None
+
+        if hasattr(form, "selected_videos") and form.selected_videos:
+            sel_label = next(iter(form.selected_videos.keys()))
+            for path, info in getattr(form, "all_videos", {}).items():
+                if info.get("label") == sel_label:
+                    initial_genre = info.get("genre")
+                    break
+
+        if initial_genre:
+            try:
+                idx = form.genre_list.index(initial_genre)
+                lb.selection_set(idx)
+                lb.see(idx)
+            except ValueError:
+                pass
+    except Exception:
+        pass
+
+    # 操作パネル
+    bottom = tk.Frame(form.new_window)
+    bottom.pack(fill=tk.X, padx=8, pady=(0,8))
+
+    # 新規ジャンル追加
+    form.new_window.txtbox_addgenre = tk.Entry(bottom)
+    form.new_window.txtbox_addgenre.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,6))
+    form.new_window.btn_addgenre = tk.Button(bottom, text="追加", width=8, command=lambda: add_Genre(form, lb))
+    form.new_window.btn_addgenre.pack(side=tk.LEFT, padx=(0,6))
+
     def on_confirm():
-        set_Genre(form, form.genre_var.get())  # ジャンル設定
-        new_window.destroy()  # ウィンドウを閉じる
+        sel = lb.curselection()
+        if not sel:
+            messagebox.showinfo("情報", "ジャンルを選択してください。")
+            return
+        genre = lb.get(sel[0])
+        set_Genre(form, genre)
+        form.new_window.destroy()
 
     def on_clear():
-        set_Genre(form, None)  # ジャンル設定解除
-        new_window.destroy()  # ウィンドウを閉じる
+        set_Genre(form, None)
+        form.new_window.destroy()
 
+    btn_clear = tk.Button(bottom, text="解除", command=on_clear, width=8)
+    btn_clear.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C",bd=0)
+    btn_clear.pack(side=tk.LEFT, padx=(0,6))
+    btn_confirm = tk.Button(bottom, text="確定", command=on_confirm, width=8)
+    btn_confirm.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD",bd=0)
+    btn_confirm.pack(side=tk.LEFT, padx=(0,6))
+    btn_close = tk.Button(bottom, text="閉じる", command=form.new_window.destroy, width=8)
+    btn_close.pack(side=tk.RIGHT)
 
-    # ジャンル選択のラジオボタン
-    form.genre_var = tk.StringVar(value=form.genre_list[0])
-    for genre in form.genre_list:
-        rb = ttk.Radiobutton(new_window, text=genre, variable=form.genre_var, value=genre)
-        rb.pack(anchor=tk.W)
-
-    # ジャンル解除ボタンを作成
-    btn_cancel = ttk.Button(new_window, text="解除", command=on_clear)
-    btn_cancel.pack(pady=10)
-
-    # 確定ボタンを作成
-    btn_confirm = ttk.Button(new_window, text="確定", command=on_confirm)
-    btn_confirm.pack(pady=10)
-
-    # 閉じるボタンを作成
-    btn_close = ttk.Button(new_window, text="閉じる", command=new_window.destroy)
-    btn_close.pack(pady=10)
-    
-    rb_frame = tk.Frame(new_window, bg="#000000")
-    rb_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-    
-    for i in range(3):
-        rb_frame.grid_columnconfigure(i, weight=1)
-
-    form.genre_var = tk.StringVar(value=form.genre_list[0])
-    
-    for i, content in enumerate(form.genre_list):
-        row = i // 3  # 行番号
-        col = i % 3   # 列番号
         
-        rb = tk.Radiobutton(rb_frame, text=content, variable=form.genre_var, value=genre, command=lambda x=i: set_genre(x))
-        rb.config(font=("Helvetica", 12),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
-        rb.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
+    def on_entry_enter(event):
+        add_Genre(form, lb)
+    form.new_window.txtbox_addgenre.bind("<Return>", on_entry_enter)
 
-    # テキストボックスと追加ボタンを下部に配置
-    bottom_frame = tk.Frame(form.genre_window, bg="#000000")
-    bottom_frame.pack(fill=tk.X, padx=5, pady=5, side=tk.BOTTOM)
-
-    form.genre_window.txtbox_addgenre = tk.Text(bottom_frame, height=1, width=30)
-    form.genre_window.txtbox_addgenre.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0,5))
     
-    form.genre_window.btn_addgenre = tk.Button(bottom_frame, text="追加", command=lambda: add_Genre())
-    form.genre_window.btn_addgenre.pack(side=tk.RIGHT)
 
 def set_Genre(form, genre):
     """選択された一つ以上の動画にジャンルを設定する"""
@@ -205,6 +232,7 @@ def set_Genre(form, genre):
                 file_name = os.path.basename(target_filepath)
                 
                 form.header.lbl_videoName.config(text=f"選択動画： [{genre}] {file_name}")
+        check_Genre(form)
 
 
 def check_Genre(form):
