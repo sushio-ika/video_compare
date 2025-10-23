@@ -38,82 +38,125 @@ def add_Genre(form,listbox):
 
 def show_GenreWindow(form):
     """ジャンル選択メニューを表示"""
+    def on_focusout(event):
+        if event.widget is form.genre_window:
+            return
+        form.genre_window.destroy()
 
-
+    # 全選択・全解除の処理をする関数
+    def check_all(form, chflg):
+        if chflg:
+            if all(x==1 for x in form.genre_checkedList):
+                return
+        else:
+            if all(x==0 for x in form.genre_checkedList):
+                return
+            
+        for i in range(len(form.genre_checkedList)):
+            form.genre_checkedList[i] = 1 if chflg else 0
+        form.genre_window.destroy()
+        show_GenreWindow(form)
+        check_Genre(form)
 
     if hasattr(form, 'genre_window') and form.genre_window.winfo_exists():
         form.genre_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
         return
 
+    genre_sum=[0]* len(form.genre_list) # ジャンルごとの設定個数をカウントする
+
     form.genre_window = tk.Toplevel(form)
-    form.genre_window.configure(bg="#000000")
+    form.genre_window.configure(bg="#2E2E2E")
     form.genre_window.overrideredirect(True)
     form.genre_window.resizable(False,False)
-
-    def on_focusout(event):
-        if event.widget is form.genre_window:
-            return
-        form.genre_window.destroy()
-        
     form.genre_window.bind("<FocusOut>", on_focusout)
         
-    # メインウィンドウのレイアウト情報を確実に取得する
     form.update_idletasks()
-
-    # ヘッダーの高さを取得（存在しない場合は0）
     header_h = form.header.winfo_height()
 
-    # ログウィンドウの幅と高さを計算
     log_w = 400
     log_h = 400
 
-    # 画面上の配置位置を計算（ヘッダーの下、左端）
     pos_x = form.winfo_rootx()
     pos_y = form.winfo_rooty() + header_h
 
-    # 画面外にはみ出さないように調整（必要なら）
     screen_h = form.winfo_screenheight()
+
     if pos_y + log_h > screen_h:
         log_h = max(100, screen_h - pos_y)
 
     form.genre_window.geometry(f"{log_w}x{log_h}+{pos_x}+{pos_y}")
 
+
     # ここからメイン処理
+    btn_frame=tk.Frame(form.genre_window,bg="#2E2E2E")
+    btn_frame.pack(fill=tk.X,padx=5,pady=5)
 
-    def check_all(form, chflg):
-        if chflg:
-            form.genre_checkedList[1]*len(form.genre_checkedList)
-        else:
-            form.genre_checkedList[0]*len(form.genre_checkedList)
+    btn_allCheck=tk.Button(btn_frame,text="全選択", width=8, command=lambda: check_all(form, True))
+    btn_allCheck.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+    btn_allCheck.pack(side=tk.LEFT,padx=5)
+    btn_allRemove=tk.Button(btn_frame,text="全解除", width=8, command=lambda: check_all(form, False))
+    btn_allRemove.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+    btn_allRemove.pack(side=tk.LEFT,padx=5)
 
-
-    btn_allCheck=tk.Button(chb_frame,text="全選択", width=8, command=check_all(form, True))
-    btn_allCheck.pack(side=tk.LEFT,padx=(0,6))
-    btn_allRemove=tk.Button(chb_frame,text="全解除", width=8, command=check_all(form, False))
-    btn_allRemove.pack(side=tk.LEFT,padx=(0,6))
-
-    chb_frame = tk.Frame(form.genre_window, bg="#000000")
+    chb_frame = tk.Frame(form.genre_window, bg="#2E2E2E")
     chb_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     chb_frame.focus_set()
 
+    # 各ジャンルの設定個数をカウント
+    for idx, info in enumerate(form.all_videos.values()):
+            genre = info['genre']
+            for i, content in enumerate(form.genre_list):
+                if genre==content:
+                    genre_sum[i]+=1
+
+    # フレームを3列に設定
     for i in range(3):
         chb_frame.grid_columnconfigure(i, weight=1)
 
+    # 左上から順にジャンルを設置
     for i, content in enumerate(form.genre_list):
         row = i // 3  # 行番号
         col = i % 3   # 列番号
         
-        chb = tk.Checkbutton(chb_frame, text=content,variable=content, command=lambda x=i: set_genre(form, x))
+        chb = tk.Checkbutton(chb_frame, text=content+f"({str(genre_sum[i])})",variable=content, command=lambda x=i: set_genre(form, x))
         chb.config(font=("Helvetica", 8),bg="#FFFFFF", fg="#2E2E2E", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
         chb.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
 
         if form.genre_checkedList[i]==1:
-            content.set(1)
+            chb.select()
+        else:
+            chb.deselect()
 
 
 
 def popup_select_genre(form):
     """ジャンル選択の処理"""
+    def delete_Genre(form,genre):
+        if genre in form.genre_list:  
+            result=messagebox.askyesno("確認",f"ジャンル「{genre}」を本当に削除しますか？")
+            
+            if result:
+                index = form.genre_list.index(genre)
+                form.genre_list.pop(index)
+                form.genre_checkedList.pop(index)
+                lb.delete(lb.curselection())
+            else:
+                return
+    
+    def click_RightMenu(form,event=None):
+        widget=event.widget
+        select_list=widget.curselection()
+        
+        # 何も選択しなかった場合
+        if not select_list:
+            return
+        
+        selected_genre = widget.get(widget.curselection())
+
+        menu=tk.Menu(form,tearoff=0)
+        menu.add_command(label="このジャンルを削除", command=lambda: delete_Genre(form,selected_genre))
+        menu.post(event.x_root, event.y_root)
+
     form.new_window = tk.Toplevel(form)
     form.new_window.title("ジャンル選択画面")
     form.new_window.geometry("500x400")
@@ -136,6 +179,8 @@ def popup_select_genre(form):
     # リストにジャンルを挿入
     for genre in form.genre_list:
         lb.insert(tk.END, genre)
+    
+    lb.bind("<Button-3>", lambda event: click_RightMenu(form, event))
 
     try:
         initial_genre = None
