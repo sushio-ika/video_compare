@@ -201,12 +201,15 @@ def open_File(form):
         form.change_VideoSize(3)#デフォルトサイズ
 
     if "videos" in loaddata:
-        for video in loaddata["videos"]:
-            for name,info in video.items():
-                for key,value in info.items():
-                    if "filepath" == key:
-                        form.add_Video(value)
+        video_list= loaddata["videos"]
+        for video_item in video_list:
+            for key,video_info in video_item.items():
+                file_path=video_info["filepath"]
+                genre=video_info["genre"]
 
+                if form.add_Video(file_path):
+                    form.header.btn_genre.config(state=tk.NORMAL)
+                    form.all_videos[file_path]['genre'] = genre
     
     
     check_Genre(form)
