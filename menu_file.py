@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog, ttk
 import os
+import json
 
 from log_file import(add_log)
+from genre_file import(check_Genre)
 
 def show_AppInfo():
     """使い方を表示"""
@@ -35,9 +37,13 @@ def copy_Video(form):
     if form.selected_videos:
         form.change_VideoState(tk.NORMAL)
         file_path=form.get_Filepath()
+
+        
         try:
             form.clipboard_clear()
             form.clipboard_append(file_path)
+
+            print(form.copied_videos)
         
             print(f"クリップボードにコピーされました: {file_path}")
         
@@ -70,6 +76,8 @@ def cut_Video(form):
             form.clipboard_append(file_path)
             delete_Video(form, del_Videos=list(form.selected_videos.keys()))
             form.change_VideoSize(form.col_size)
+
+            print(form.copied_videos)
         
             print(f"クリップボードにコピーされました: {file_path}")
         
@@ -116,27 +124,93 @@ def delete_Video(form, del_Videos=None):
 
 def save_File(form, overwrite=False):
     """ファイルを保存する"""
-    if overwrite:
-        form.title(form.current_file)
+    #上書き保存か名前を付けて保存（current_filepathの中身が存在しているかどうか）
+    if overwrite and form.current_file:
+        #上書き保存
+        file_path = form.current_file
     else:
         # 名前を付けて保存の処理
         file_path = filedialog.asksaveasfilename(
-            defaultextension=".mlk",
-            filetypes=[("Murti Link Files", "*.mlk"), ("All Files", "*.*")]
+            defaultextension=".ml",
+            filetypes=[("Murti Link Files", "*.ml"), ("All Files", "*.*")]
         )
-        if file_path:
-            form.current_file = file_path
-            form.title(form.current_file)
+        #ファイルパスが空の場合は保存しない
+        if not file_path:
+            return
+        
+        form.current_file = file_path
+        videos=[]
+        n=1
+        for path,info in form.all_videos.items():
+            videos.append({f"video{n}":{"filepath":path,"genre":info["genre"]}})
+            n+=1
+
+        if (n-1)!=len(form.all_videos):
+            messagebox.showerror("エラー","保存操作でエラーが発生しました")
+
+        savedata = {
+            "genre":form.genre_list,
+            "check":form.genre_checkedList,
+            "size": form.col_size,
+            "num":n-1,
+            "videos": videos 
+        }
+
+        with open(form.current_file, "w", encoding="utf-8") as f:
+            json.dump(savedata, f, indent=4)#JSON形式で保存
+
+        print("保存完了", "ファイルが正常に保存されました。")
+
+        form.title(f"マルチリンク -{os.path.basename(form.current_file)}-")
 
 def open_File(form):
     """ファイルを開く"""
     file_path = filedialog.askopenfilename(
         title="ファイルを開く",
-           filetypes=[("Murti Link Files", "*.mlk"), ("All Files", "*.*")]
+           filetypes=[("Murti Link Files", "*.ml"), ("All Files", "*.*")]
     )
-    if file_path:
-        form.current_file = file_path
-        form.title(form.current_file)
+
+    if not file_path:
+        return
+
+    form.current_file = file_path#ファイルパスを更新
+
+    form.genre_list = []
+    form.genre_checkedList = []
+    form.all_videos={}
+    form.selected_videos = {}
+        
+    with open(form.current_file, "r", encoding="utf-8") as f:
+        loaddata = json.load(f)
+
+    if "genre" in loaddata:
+        for g in loaddata["genre"]:
+            form.genre_list.append(g)
+    else:
+        form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
+
+    if "check" in loaddata:
+        for g in loaddata["check"]:
+            form.genre_checkedList.append(g)
+    else:
+        form.genre_checkedList = [0] * len(form.genre_list)
+        
+    if "size" in loaddata:#フォントサイズが指定されている場合
+        form.change_VideoSize(loaddata["size"])
+    else:
+        form.change_VideoSize(3)#デフォルトサイズ
+
+    if "videos" in loaddata:
+        for video in loaddata["videos"]:
+            for name,info in video.items():
+                for key,value in info.items():
+                    if "filepath" == key:
+                        form.add_Video(value)
+
+    
+    
+    check_Genre(form)
+    form.title(f"マルチリンク -{os.path.basename(form.current_file)}-")
 
 def create_NewFile(form):
     """新しいファイルを作成する"""
@@ -203,7 +277,7 @@ def show_FileWindow(form):
         return
 
     form.file_window = tk.Toplevel(form)
-    form.file_window.configure(bg="#000000")
+    form.file_window.configure(bg="#2E2E2E")
     form.file_window.overrideredirect(True)
     form.file_window.resizable(False,False)
     form.file_window.focus_set()

@@ -590,11 +590,10 @@ class main(TkinterDnD.Tk):
     def get_Filepath(form):
         """選択されている動画のファイルパスを取得する"""
         selected_videos = list(form.selected_videos.keys())[0]
-        file_path = ""
         for path, info in form.all_videos.items():
             if info['label'] == selected_videos:
-                file_path += path
-        return file_path
+                return path
+        
 
     def copy_VideoName(form):
         if len(form.selected_videos)==1:
@@ -645,6 +644,8 @@ class main(TkinterDnD.Tk):
             messagebox.showerror("エラー", f"ファイルが見つかりません: {file_path}")
             return
 
+        form.stop_Video()
+        
         try:
             os.startfile(file_path)
         except Exception as e:
