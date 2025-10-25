@@ -161,7 +161,7 @@ def save_File(form, overwrite=False):
 
         print("保存完了", "ファイルが正常に保存されました。")
 
-        form.title(f"マルチリンク -{os.path.basename(form.current_file)}-")
+        form.title(os.path.basename(form.current_file))
 
 def open_File(form):
     """ファイルを開く"""
@@ -213,12 +213,23 @@ def open_File(form):
     
     
     check_Genre(form)
-    form.title(f"マルチリンク -{os.path.basename(form.current_file)}-")
+    form.title(os.path.basename(form.current_file))
 
 def create_NewFile(form):
     """新しいファイルを作成する"""
-    form.current_file = None
-    form.title("マルチリンク -新規ファイル-")
+    form.current_file = None#ファイルパスを更新
+    form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
+    form.genre_checkedList = [0] * len(form.genre_list)
+    form.change_VideoSize(3)#デフォルトサイズ
+
+    if len(form.all_videos)>0:
+        # 動画削除処理
+        return  
+    form.all_videos={}
+    form.selected_videos = {}
+            
+    check_Genre(form)
+    form.title(os.path.basename("新規ファイル"))
     
 def show_LogWindow(form):
     """ログ表示ウィンドウを表示"""
@@ -309,15 +320,15 @@ def show_FileWindow(form):
     form.file_window.geometry(f"{fWindow_width}x{fWindow_height}+{pos_x}+{pos_y}")
 
     # ファイル保存、開くボタン
-    form.file_window.btn_openFile = tk.Button(form.file_window, text="開く", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_openFile = tk.Button(form.file_window, text="開く", width=10, command=lambda: open_File(form))
     form.file_window.btn_openFile.pack(side=tk.LEFT, padx=5, pady=5)
     form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    form.file_window.btn_saveFile = tk.Button(form.file_window, text="保存", width=10, command=lambda: messagebox.showinfo("情報", "保存機能は未実装です。"))
+    form.file_window.btn_saveFile = tk.Button(form.file_window, text="保存", width=10, command=lambda: save_File(form, overwrite=False))
     form.file_window.btn_saveFile.pack(side=tk.LEFT, padx=5, pady=5)
     form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    form.file_window.btn_newFile = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: messagebox.showinfo("情報", "新規作成機能は未実装です。"))
+    form.file_window.btn_newFile = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: create_NewFile(form))
     form.file_window.btn_newFile.pack(side=tk.LEFT, padx=5, pady=5)
     form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 

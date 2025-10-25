@@ -140,6 +140,7 @@ def popup_select_genre(form):
                 form.genre_list.pop(index)
                 form.genre_checkedList.pop(index)
                 lb.delete(lb.curselection())
+                popup_select_genre(form)
             else:
                 return
     
@@ -181,6 +182,7 @@ def popup_select_genre(form):
         lb.insert(tk.END, genre)
     
     lb.bind("<Button-3>", lambda event: click_RightMenu(form, event))
+    lb.select_set(0)
 
     try:
         initial_genre = None
@@ -199,6 +201,7 @@ def popup_select_genre(form):
                 lb.see(idx)
             except ValueError:
                 pass
+
     except Exception:
         pass
 

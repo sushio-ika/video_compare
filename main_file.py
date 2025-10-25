@@ -54,7 +54,7 @@ class main(TkinterDnD.Tk):
         form.genre_checkedList = [0] * len(form.genre_list)  # 選択されているジャンルの有無を保存するリスト（0:未選択, 1:選択中）
 
         # ウィンドウの基本設定
-        form.title("マルチリンク -新規ファイル-")
+        form.title("新規ファイル")
         form.geometry(f"{WINDOW_WIDTH_SIZE}x{WINDOW_HEIGHT_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.resizable(False, False)
