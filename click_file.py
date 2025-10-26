@@ -161,7 +161,7 @@ def right_clickmenu(form, event):
         menu.add_separator()
         menu.add_command(label="コピー", command=lambda: copy_Video(form))
         menu.add_command(label="切り取り", command=lambda: cut_Video(form))
-        menu.add_command(label="削除", command=lambda: delete_Video(form, widgets=list(form.selected_videos.keys())))
+        menu.add_command(label="削除", command=lambda: delete_Video(form))
         menu.post(event.x_root, event.y_root)
     elif widget in [form.header.lbl_videoName] and form.header.lbl_videoName.cget("state") == tk.NORMAL:
         menu=tk.Menu(form,tearoff=0)
@@ -179,7 +179,7 @@ def right_clickmenu(form, event):
         menu.add_command(label="コピー", command=lambda: copy_Video(form))
         menu.add_command(label="貼り付け", command=lambda: paste_Video(form))
         menu.add_command(label="切り取り", command=lambda: cut_Video(form))
-        menu.add_command(label="削除", command=lambda: delete_Video(form,  del_Videos=list(form.selected_videos.keys())))
+        menu.add_command(label="削除", command=lambda: delete_Video(form))
         menu.add_separator()
 
         save_menu = tk.Menu(menu, tearoff=0)

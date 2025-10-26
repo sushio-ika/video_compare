@@ -94,7 +94,7 @@ def create_widgets(form):
     form.footer.btn_addVideo.pack(side=tk.RIGHT, padx=5, pady=5)
     form.footer.btn_addVideo.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#357ABD", activeforeground="#FFFFFF", bd=0)
 
-    form.footer.btn_deleteVideo = tk.Button(form.footer, text="削除", width=20, command=lambda: delete_Video(form, del_Videos=list(form.selected_videos.keys())))
+    form.footer.btn_deleteVideo = tk.Button(form.footer, text="削除", width=20, command=lambda: delete_Video(form))
     form.footer.btn_deleteVideo.pack(side=tk.RIGHT, padx=5, pady=5)
     form.footer.btn_deleteVideo.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
         

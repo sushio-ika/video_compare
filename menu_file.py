@@ -74,7 +74,7 @@ def cut_Video(form):
         try:
             form.clipboard_clear()
             form.clipboard_append(file_path)
-            delete_Video(form, del_Videos=list(form.selected_videos.keys()))
+            delete_Video(form)
             form.change_VideoSize(form.col_size)
 
             print(form.copied_videos)
@@ -84,11 +84,10 @@ def cut_Video(form):
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
 
-def delete_Video(form, del_Videos=None):
+def delete_Video(form):
     """現在選択している動画を削除する"""
-    if del_Videos is None:
-        del_Videos = list(form.selected_videos.keys())
-
+    del_Videos = list(form.selected_videos.keys())
+    
     if not del_Videos:
         messagebox.showerror("エラー","削除する動画を選択してください")
 
@@ -106,7 +105,7 @@ def delete_Video(form, del_Videos=None):
             if info.get('stop_flag'):
                 info['stop_flag'].set()
             if info.get('capture'):
-                info['capture'].release()
+                    info['capture'].release()
             widget.destroy()
 
             del form.all_videos[delete_filepath]
@@ -114,7 +113,10 @@ def delete_Video(form, del_Videos=None):
             # 削除後、選択されたラベルリストからも削除
             if widget in form.selected_videos:
                 del form.selected_videos[widget]
-    
+        
+    # 動画を再配置
+    form.relocate_Video()
+
     if not form.all_videos:
         form.change_VideoSize(form.col_size)
         form.change_VideoState(tk.DISABLED)
@@ -223,8 +225,12 @@ def create_NewFile(form):
     form.change_VideoSize(3)#デフォルトサイズ
 
     if len(form.all_videos)>0:
-        # 動画削除処理
-        return  
+        # 追加されている動画を削除するためにselected_videosに追加して疑似選択状態にする
+        for info in form.all_videos.values():
+            widget=info['label']
+            form.selected_videos[widget]=True
+        delete_Video(form)
+
     form.all_videos={}
     form.selected_videos = {}
             
