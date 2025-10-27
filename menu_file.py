@@ -36,16 +36,14 @@ def copy_Video(form):
     """動画をコピーする"""
     if form.selected_videos:
         form.change_VideoState(tk.NORMAL)
-        file_path=form.get_Filepath()
+        copy_list=form.get_ClipPath()
 
-        
         try:
+            edit_list = "\n".join(copy_list)
             form.clipboard_clear()
-            form.clipboard_append(file_path)
+            form.clipboard_append(edit_list)
 
-            print(form.copied_videos)
-        
-            print(f"クリップボードにコピーされました: {file_path}")
+            print(f"動画をコピーしました: {edit_list}")
         
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
@@ -53,33 +51,39 @@ def copy_Video(form):
 def paste_Video(form):
     """動画を貼り付ける"""
     try:
-        file_path = form.clipboard_get()
-        if os.path.isfile(file_path):
-            form.add_Video(file_path)
-            print(f"クリップボードから貼り付けました: {file_path}")
-            return file_path
-        else:
-            print("クリップボードの内容は有効なファイルパスではありません。")
-            return None
-            
+        paste_list = form.clipboard_get()
+        edit_list=paste_list.strip().split('\n')
+
+        for file_path in edit_list:
+            if os.path.isfile(file_path):
+                form.add_Video(file_path)
+                print(f"動画を貼り付けました: {edit_list}")
+            else:
+                print("クリップボードの内容は有効なファイルパスではありません。")
     except tk.TclError:
         print("クリップボードから有効なテキストを取得できませんでした。")
-        return None
 
 def cut_Video(form):
     """動画を切り取る"""
     if form.selected_videos:
         form.change_VideoState(tk.NORMAL)
-        file_path=form.get_Filepath()
+        cut_list=form.get_ClipPath()
+
         try:
+            edit_list = "\n".join(cut_list)
             form.clipboard_clear()
-            form.clipboard_append(file_path)
+            form.clipboard_append(edit_list)
+            
+            for path in cut_list:
+                for filepath, info in form.all_videos.items():
+                    if path==filepath: 
+                        widget=info['label']
+                        form.selected_videos[widget]=True
             delete_Video(form)
+
             form.change_VideoSize(form.col_size)
 
-            print(form.copied_videos)
-        
-            print(f"クリップボードにコピーされました: {file_path}")
+            print(f"動画をカットしました: {cut_list}")
         
         except tk.TclError as e:
             print(f"クリップボードへのアクセスエラー: {e}")
@@ -143,8 +147,13 @@ def save_File(form, overwrite=False):
         form.current_file = file_path
         videos=[]
         n=1
-        for path,info in form.all_videos.items():
-            videos.append({f"video{n}":{"filepath":path,"genre":info["genre"]}})
+        # videoID でソート
+        sorted_videos = sorted(
+            form.all_videos.items(),
+            key=lambda x: x[1]['videoID']
+        )
+        for path,info in sorted_videos:
+            videos.append({f"video{n}":{"filepath":path,"videoid":info["videoID"],"genre":info["genre"]}})
             n+=1
 
         if (n-1)!=len(form.all_videos):

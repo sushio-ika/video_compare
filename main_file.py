@@ -9,7 +9,7 @@ import shutil
 from tkinterdnd2 import TkinterDnD
 import time
 
-from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_DoubleLeft)
+from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_DoubleLeft,set_VideoHighlight)
 from create_item_file import (create_widgets)
 from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video)
 from log_file import(add_log, init_log)
@@ -36,7 +36,6 @@ class main(TkinterDnD.Tk):
         form.resize_info = None  #サイズ変更の情報を保存する辞書
         form.selected_videos = {}  #選択中の動画ラベルを管理する辞書
         form.all_videos = {}      # 動画の情報を管理する辞書
-        form.copied_videos = None # コピー/カットした動画の情報を保存する辞書
         form.col_size = 3 # デフォルトの動画表示の列数(1<=x<=5)
         form.stop_flag = None
         form.video_state = True  # 動画の再生/一時停止状態
@@ -308,23 +307,25 @@ class main(TkinterDnD.Tk):
         ret, frame = capture.read()
         if ret:
             form.all_videos[file_path]['last_frame'] = frame
-            frame_height, frame_width = frame.shape[:2]
-            aspect_ratio = frame_height / frame_width
             new_width = WINDOW_WIDTH_SIZE // form.col_size - 10  # パディングを考慮
-            new_height = int(new_width * aspect_ratio)
-            resized_frame = cv2.resize(frame, (new_width, new_height))
-            frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(frame_rgb)
-            img_tk = ImageTk.PhotoImage(img)
+            img_tk=form.get_Image(frame,new_width)
             form.update_Image(video_label, img_tk)
 
         form.change_ExistvideoState(tk.NORMAL)
         check_Genre(form)
 
+        # 選択状態にする
+        set_VideoHighlight(form, video_label)
+        form.selected_videos[video_label]=True
+        form.lbl_timestamp.config(text="00:00/00:00")
+        # ラベル表示処理（関数化？）
+
+        
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
 
+    
     def relocate_Video(form):
         """動画表示エリアの動画を再配置する関数(並び替え時使用)"""
         # videoID でソート
@@ -520,6 +521,17 @@ class main(TkinterDnD.Tk):
         video_label.config(image=img_tk)
         video_label.image = img_tk
 
+    def get_Image(form, frame, width):
+        frame_height, frame_width = frame.shape[:2]
+        aspect_ratio = frame_height / frame_width
+        new_height = int(width * aspect_ratio)
+        resized_frame = cv2.resize(frame, (width, new_height))
+        frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(frame_rgb)
+        img_tk = ImageTk.PhotoImage(img)
+
+        return img_tk
+        
     def change_VideoSize(form, s):
         """動画表示の列数を変更する関数"""
         # 列数の範囲を制限
@@ -539,14 +551,8 @@ class main(TkinterDnD.Tk):
             label.config(width=new_width, height=new_height)
             last_frame = info.get('last_frame')
 
-            if last_frame is not None:
-                frame_height, frame_width = last_frame.shape[:2]
-                aspect_ratio = frame_height / frame_width
-                disp_height = int(new_width * aspect_ratio)
-                resized_frame = cv2.resize(last_frame, (new_width, disp_height))
-                frame_rgb = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
-                img = Image.fromarray(frame_rgb)
-                img_tk = ImageTk.PhotoImage(img)
+            if last_frame is not None:                
+                img_tk = form.get_Image(last_frame,new_width)
                 form.update_Image(label, img_tk)
 
         # ジャンル設定を反映
@@ -591,7 +597,18 @@ class main(TkinterDnD.Tk):
             if info['label'] == selected_videos:
                 return path
         
+    def get_ClipPath(form):
+        """選択されている複数動画のファイルパスリストを取得する"""
+        selected_videos = list(form.selected_videos.keys())
+        path_list=[]
 
+        for i,sel_video in enumerate(selected_videos):
+            for path, info in form.all_videos.items():
+                if info['label'] == sel_video:
+                    path_list.append(path)
+                    break
+        return path_list
+            
     def copy_VideoName(form):
         if len(form.selected_videos)==1:
             form.change_VideoState(tk.NORMAL)
