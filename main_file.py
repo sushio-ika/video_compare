@@ -537,10 +537,8 @@ class main(TkinterDnD.Tk):
         for idx, info in enumerate(form.all_videos.values()):
             label = info['label']
             label.config(width=new_width, height=new_height)
-            col = idx % form.col_size
-            row = idx // form.col_size
-            label.grid(row=row, column=col, padx=5, pady=5)
             last_frame = info.get('last_frame')
+
             if last_frame is not None:
                 frame_height, frame_width = last_frame.shape[:2]
                 aspect_ratio = frame_height / frame_width
@@ -550,6 +548,9 @@ class main(TkinterDnD.Tk):
                 img = Image.fromarray(frame_rgb)
                 img_tk = ImageTk.PhotoImage(img)
                 form.update_Image(label, img_tk)
+
+        # ジャンル設定を反映
+        check_Genre(form)
         
         # 画面表示サイズが最大または最小のとき、それぞれのボタンを無効化
         if s>=5:
@@ -561,10 +562,6 @@ class main(TkinterDnD.Tk):
         else:
             form.header.btn_sizeMinus.config(state=tk.NORMAL)
             form.header.btn_sizePlus.config(state=tk.NORMAL)
-
-
-        # ジャンル設定を反映
-        check_Genre(form)
 
 
     def move_Scrollbar(form, point):

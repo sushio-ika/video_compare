@@ -44,7 +44,7 @@ def click_DoubleLeft(form,event):
     if widget in [info['label'] for info in form.all_videos.values()]:
         videoid=form.get_Videoid()
         videonum=form.get_VideoNum()
-
+        
         if videoid==-1:
             messagebox.showerror("エラー","複数の動画が選択されています。") # -1が返ってくるため
         elif videonum==0:

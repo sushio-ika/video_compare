@@ -316,6 +316,10 @@ def check_Genre(form):
         row = idx // getattr(form, 'col_size', 3)
         widget.grid(row=row, column=col, padx=5, pady=5)
 
+    # 再配置
+    form.relocate_Video()
+
+    
     if hasattr(form, "mainForm") and hasattr(form, "frm_setVideo"):
         form.frm_setVideo.update_idletasks()
         try:
