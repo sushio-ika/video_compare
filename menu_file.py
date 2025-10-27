@@ -18,8 +18,8 @@ def show_AppInfo():
 
 def show_Ver():
     messagebox.showinfo("バージョン情報",
-                        "バージョン\tver.0.0.2\n"
-                        "更新日\t2025/10/18\n")
+                        "バージョン\tver.0.0.3\n"
+                        "更新日\t2025/10/27\n")
     
 def show_SettingWindow(form):
     """設定メニューを表示"""
@@ -205,7 +205,7 @@ def open_File(form):
             widget=info['label']
             form.selected_videos[widget]=True
         delete_Video(form)
-        
+
     form.all_videos={}
     form.selected_videos = {}
         
