@@ -3,6 +3,7 @@ from tkinter import messagebox, filedialog, ttk
 import os
 import json
 
+from highright_file import(set_VideoHighlight)
 from log_file import(add_log)
 from genre_file import(check_Genre)
 
@@ -54,9 +55,18 @@ def paste_Video(form):
         paste_list = form.clipboard_get()
         edit_list=paste_list.strip().split('\n')
 
-        for file_path in edit_list:
-            if os.path.isfile(file_path):
-                form.add_Video(file_path)
+        for path in edit_list:
+            if os.path.isfile(path):
+                form.add_Video(path)
+
+                # 選択状態にしてラベルに表示
+                for filepath, info in form.all_videos.items():
+                    if path==filepath:
+                        set_VideoHighlight(form, info["label"])
+                        form.selected_videos[info["label"]]=True
+                        form.lbl_timestamp.config(text="00:00/00:00")
+                        form.set_NameLabel()
+
                 print(f"動画を貼り付けました: {edit_list}")
             else:
                 print("クリップボードの内容は有効なファイルパスではありません。")
@@ -188,6 +198,14 @@ def open_File(form):
 
     form.genre_list = []
     form.genre_checkedList = []
+
+    if len(form.all_videos)>0:
+        # 追加されている動画を削除するためにselected_videosに追加して疑似選択状態にする
+        for info in form.all_videos.values():
+            widget=info['label']
+            form.selected_videos[widget]=True
+        delete_Video(form)
+        
     form.all_videos={}
     form.selected_videos = {}
         

@@ -314,18 +314,48 @@ class main(TkinterDnD.Tk):
         form.change_ExistvideoState(tk.NORMAL)
         check_Genre(form)
 
-        # 選択状態にする
+        # 選択状態にしてラベルに表示
         set_VideoHighlight(form, video_label)
         form.selected_videos[video_label]=True
         form.lbl_timestamp.config(text="00:00/00:00")
-        # ラベル表示処理（関数化？）
-
+        form.set_NameLabel()
         
         # ヒントラベルを非表示にする
         # if form.lbl_hint.winfo_ismapped():
         #    form.lbl_hint.pack_forget()
 
-    
+    def set_NameLabel(form):
+        # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
+        if len(form.selected_videos)==1:
+            form.change_VideoState(tk.NORMAL)
+            file_path=form.get_Filepath()
+
+            # ファイル名のみを抽出して表示
+            file_name = os.path.basename(file_path)
+
+            # ジャンルが設定されていれば表示
+            get_genre = form.all_videos.get(file_path, {}).get('genre')
+            if get_genre:
+                form.header.lbl_videoName.config(text=f"選択動画： [{get_genre}] {file_name}")
+            else:
+                form.header.lbl_videoName.config(text=f"選択動画： {file_name}")
+
+            # 動画再生処理の準備
+            info = form.all_videos[file_path]
+            capture = info['capture']
+            capture.set(cv2.CAP_PROP_POS_FRAMES, capture.get(cv2.CAP_PROP_POS_FRAMES))
+            form.stop_Video()
+        else:
+            form.change_VideoState(tk.DISABLED)
+            if len(form.selected_videos)>1:
+                form.header.lbl_videoName.config(text="選択動画： *")
+            else:
+                form.header.lbl_videoName.config(text="選択動画： なし")
+
+            form.lbl_timestamp.config(text="00:00/00:00")
+            form.stop_Video()
+
+
     def relocate_Video(form):
         """動画表示エリアの動画を再配置する関数(並び替え時使用)"""
         # videoID でソート

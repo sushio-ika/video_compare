@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 
+from highright_file import(set_VideoHighlight,clear_AllvideoHighlights,clear_AvideoHighlight)
 from menu_file import (
     show_AppInfo,
     show_Ver,
@@ -86,36 +87,7 @@ def click_Left(form, event, click_ctrl):
                 form.selected_videos[widget]=True
 
 
-            # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
-            if len(form.selected_videos)==1:
-                form.change_VideoState(tk.NORMAL)
-                file_path=form.get_Filepath()
-
-                # ファイル名のみを抽出して表示
-                file_name = os.path.basename(file_path)
-
-                # ジャンルが設定されていれば表示
-                get_genre = form.all_videos.get(file_path, {}).get('genre')
-                if get_genre:
-                    form.header.lbl_videoName.config(text=f"選択動画： [{get_genre}] {file_name}")
-                else:
-                    form.header.lbl_videoName.config(text=f"選択動画： {file_name}")
-
-                # 動画再生処理の準備
-                info = form.all_videos[file_path]
-                capture = info['capture']
-                capture.set(cv2.CAP_PROP_POS_FRAMES, capture.get(cv2.CAP_PROP_POS_FRAMES))
-                form.stop_Video()
-            else:
-                form.change_VideoState(tk.DISABLED)
-
-                if len(form.selected_videos)>1:
-                    form.header.lbl_videoName.config(text="選択動画： *")
-                else:
-                    form.header.lbl_videoName.config(text="選択動画： なし")
-
-                form.lbl_timestamp.config(text="00:00/00:00")
-                form.stop_Video()
+            form.set_NameLabel()
 
         # 再生時間をクリックした場合
         elif widget in [form.lbl_timestamp]:
@@ -134,20 +106,6 @@ def click_Left(form, event, click_ctrl):
                 form.lbl_timestamp.config(text="00:00/00:00")
         
 
-def clear_AllvideoHighlights(form):
-    """全ての動画のハイライトをリセットする"""
-    for info in form.all_videos.values():
-        info['label'].config(bd=0, relief=tk.FLAT)
-        info['label'].config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
-
-def clear_AvideoHighlight(form, label):
-    """特定の動画のハイライトをリセットする"""
-    label.config(bd=0, relief=tk.FLAT)
-    label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
-
-def set_VideoHighlight(form, label):
-    """選択された動画に枠線を適用する"""
-    label.config(bd=2, relief=tk.RAISED, highlightbackground="#5FB7FF", highlightcolor="#5FB7FF", highlightthickness=2)
 
     
 def right_clickmenu(form, event):
