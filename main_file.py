@@ -31,15 +31,12 @@ except:
 class main(TkinterDnD.Tk):
     def __init__(form):
         super().__init__()
-        # 変数の初期化
-        form.current_file = None  #現在開いているファイルのパス
-        form.resize_info = None  #サイズ変更の情報を保存する辞書
-        form.selected_videos = {}  #選択中の動画ラベルを管理する辞書
-        form.all_videos = {}      # 動画の情報を管理する辞書
-        form.col_size = 3 # デフォルトの動画表示の列数(1<=x<=5)
-        form.stop_flag = None
-        form.video_state = True  # 動画の再生/一時停止状態
-        form.timeframe=True
+        # グローバル変数の初期化
+        form.selected_videos = {}  # 選択中の動画ラベルを管理する辞書
+        form.all_videos = {}       # 動画の情報を管理する辞書
+        form.col_size = 3          # デフォルトの動画表示の列数(1<=x<=5)
+        form.video_state = True    # 動画の再生/一時停止状態
+        form.timeorframe=True      # 再生時間表示を秒かフレームかを切り替える変数
 
         # ジャンルを選択するメニュー
         form.var_walk = tk.BooleanVar(form)
@@ -312,6 +309,7 @@ class main(TkinterDnD.Tk):
             form.update_Image(video_label, img_tk)
 
         form.change_ExistvideoState(tk.NORMAL)
+        form.relocate_Video()
         check_Genre(form)
 
         # 選択状態にしてラベルに表示
@@ -363,7 +361,7 @@ class main(TkinterDnD.Tk):
             form.all_videos.items(),
             key=lambda x: x[1]['videoID']
         )
-
+        
         # ソートされた順番で再配置
         for idx, (file_path, info) in enumerate(sorted_videos):
             label = info['label']
@@ -441,7 +439,7 @@ class main(TkinterDnD.Tk):
 
     def update_Timestamp(form, file_path):
         """選択中の動画のタイムスタンプを更新する関数"""
-        if form.timeframe:
+        if form.timeorframe:
             if file_path not in form.all_videos:
                 form.lbl_timestamp.config(text="00:00/00:00")
                 return
@@ -487,7 +485,7 @@ class main(TkinterDnD.Tk):
 
     def get_VideoTime(form, file_path):
         """指定された動画の再生時間情報を返す"""
-        if form.timeframe:
+        if form.timeorframe:
             # 動画が存在しない場合
             if file_path not in form.all_videos:
                 return "00:00/00:00"
@@ -521,10 +519,10 @@ class main(TkinterDnD.Tk):
             return f"0/{total_frames}"
 
     def change_TimeFrame(form):
-        if form.timeframe==True:
-            form.timeframe=False
+        if form.timeorframe==True:
+            form.timeorframe=False
         else:
-            form.timeframe=True
+            form.timeorframe=True
         
 
     def change_VideoState(form, vstate):
