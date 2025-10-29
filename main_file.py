@@ -36,7 +36,8 @@ class main(TkinterDnD.Tk):
         form.all_videos = {}       # 動画の情報を管理する辞書
         form.col_size = 3          # デフォルトの動画表示の列数(1<=x<=5)
         form.video_state = True    # 動画の再生/一時停止状態
-        form.timeorframe=True      # 再生時間表示を秒かフレームかを切り替える変数
+        form.timeorframe = True    # 再生時間表示を秒かフレームかを切り替える変数
+        form.undo_list = None      # undo操作をするために使用するリスト
 
         # ジャンルを選択するメニュー
         form.var_walk = tk.BooleanVar(form)
@@ -276,7 +277,7 @@ class main(TkinterDnD.Tk):
         if not capture.isOpened():
             messagebox.showerror("エラー", f"動画ファイルを開けませんでした: {file_path}")
             return
-            
+
         #動画表示用のラベルを作成
         video_label = tk.Label(form.frm_setVideo, width=WINDOW_WIDTH_SIZE // form.col_size - 10, height=int((WINDOW_WIDTH_SIZE // form.col_size - 10) * 9 / 16))
         # 追加前にall_videosへ一時追加
@@ -318,10 +319,6 @@ class main(TkinterDnD.Tk):
         form.lbl_timestamp.config(text="00:00/00:00")
         form.set_NameLabel()
         
-        # ヒントラベルを非表示にする
-        # if form.lbl_hint.winfo_ismapped():
-        #    form.lbl_hint.pack_forget()
-
     def set_NameLabel(form):
         # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示
         if len(form.selected_videos)==1:

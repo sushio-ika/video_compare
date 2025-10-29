@@ -21,9 +21,9 @@ def create_widgets(form):
     form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     # ログ表示ボタン
-    form.header.btn_log = tk.Button(form.header, text="ログ", width=3, command=lambda: show_LogWindow(form))
-    form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
-    form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
+    #form.header.btn_log = tk.Button(form.header, text="ログ", width=3, command=lambda: show_LogWindow(form))
+    #form.header.btn_log.pack(side=tk.LEFT, padx=5, pady=5)
+    #form.header.btn_log.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#7A7A7A", activeforeground="#FFFFFF", bd=0)
 
     # ジャンル選択ボタン
     form.header.btn_genre = tk.Button(form.header, text="ジャンル", command=lambda: show_GenreWindow(form))
@@ -106,10 +106,10 @@ def create_widgets(form):
     form.mainForm.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     form.scrbar_mainForm.pack(side=tk.RIGHT, fill=tk.Y)
 
-    # mainFormにフレームを作成
+    # mainFormに各動画表示フレームを作成
     form.frm_setVideo = tk.Frame(form.mainForm, bg="#2E2E2E")
     form.mainForm.create_window((0, 0), window=form.frm_setVideo, anchor="nw")
-    
+
     # mainFormサイズに合わせてスクロール領域を更新
     def updateScroll(event):
         form.mainForm.configure(scrollregion=form.mainForm.bbox("all"))

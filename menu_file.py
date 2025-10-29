@@ -22,7 +22,10 @@ def show_Ver():
     messagebox.showinfo("バージョン情報",
                         "バージョン\tver.0.0.3\n"
                         "更新日\t2025/10/27\n")
-    
+
+def send_Inquiry():
+    """お問い合わせメールを送信"""
+
 def show_SettingWindow(form):
     """設定メニューを表示"""
     messagebox.showinfo("設定", "設定メニューはまだ実装されていません。")
@@ -316,13 +319,13 @@ def show_LogWindow(form):
         return
 
     form.log_window = tk.Toplevel(form)
-    form.log_window.configure(bg="#000000")
+    form.log_window.configure(bg="#2E2E2E")
     form.log_window.overrideredirect(True)
     form.log_window.resizable(False,False)
     form.log_window.focus_set()
     
     def on_focusout(event):
-        if event.widget is form.log_window:
+        if not event.widget is form.log_window:
             return
         form.log_window.destroy()
     
@@ -365,8 +368,7 @@ def show_LogWindow(form):
 def show_FileWindow(form):
     """ファイル機能選択ウィンドウを表示"""
     if hasattr(form, 'file_window') and form.file_window.winfo_exists():
-        form.file_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
-        return
+        form.file_window.destroy()  # すでにウィンドウが存在する場合は前面に持ってくる
 
     form.file_window = tk.Toplevel(form)
     form.file_window.configure(bg="#2E2E2E")
@@ -375,7 +377,7 @@ def show_FileWindow(form):
     form.file_window.focus_set()
     
     def on_focusout(event):
-        if event.widget is form.file_window:
+        if not event.widget is form.file_window:
             return
         form.file_window.destroy()
     
@@ -383,7 +385,7 @@ def show_FileWindow(form):
     
     form.update_idletasks()
 
-    fWindow_width = 400
+    fWindow_width = 200
     fWindow_height = 400
 
     # 画面上の配置位置を計算（ヘッダーの下、左端）
@@ -397,21 +399,27 @@ def show_FileWindow(form):
 
     form.file_window.geometry(f"{fWindow_width}x{fWindow_height}+{pos_x}+{pos_y}")
 
-    # ファイル保存、開くボタン
-    form.file_window.btn_openFile = tk.Button(form.file_window, text="開く", width=10, command=lambda: open_File(form))
-    form.file_window.btn_openFile.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
-
-    form.file_window.btn_saveFile = tk.Button(form.file_window, text="保存", width=10, command=lambda: save_File(form, overwrite=False))
-    form.file_window.btn_saveFile.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
-
-    form.file_window.btn_newFile = tk.Button(form.file_window, text="新規作成", width=10, command=lambda: create_NewFile(form))
-    form.file_window.btn_newFile.pack(side=tk.LEFT, padx=5, pady=5)
-    form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+    # ボタンを表示するフレーム
+    frm_menu = tk.Frame(form.file_window)
+    frm_menu.config(bg="#2E2E2E")
+    frm_menu.pack(fill=tk.X, padx=8, pady=8)
 
     # 終了ボタン
-    form.file_window.btn_closeApp = tk.Button(form.file_window, text="終了", width=10, command=form.close_App)
-    form.file_window.btn_closeApp.pack(side=tk.LEFT, padx=5, pady=5)
+    form.file_window.btn_closeApp = tk.Button(frm_menu, text="終了", width=20, command=form.close_App)
+    form.file_window.btn_closeApp.grid(row=0,column=0)
     form.file_window.btn_closeApp.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
+
+    # ファイル保存、開くボタン
+    form.file_window.btn_openFile = tk.Button(frm_menu, text="開く", width=20, command=lambda: open_File(form))
+    form.file_window.btn_openFile.grid(row=1,column=0)
+    form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    form.file_window.btn_saveFile = tk.Button(frm_menu, text="保存", width=20, command=lambda: save_File(form, overwrite=False))
+    form.file_window.btn_saveFile.grid(row=2,column=0)
+    form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    form.file_window.btn_newFile = tk.Button(frm_menu, text="新規作成", width=20, command=lambda: create_NewFile(form))
+    form.file_window.btn_newFile.grid(row=3,column=0)
+    form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
 

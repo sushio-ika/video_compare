@@ -8,6 +8,7 @@ from highright_file import(set_VideoHighlight,clear_AllvideoHighlights,clear_Avi
 from menu_file import (
     show_AppInfo,
     show_Ver,
+    send_Inquiry,
     show_SettingWindow,
     put_Undo,
     put_Redo,
@@ -129,6 +130,7 @@ def right_clickmenu(form, event):
         menu = tk.Menu(form, tearoff=0)
         menu.add_command(label="ヘルプ", command=lambda: show_AppInfo())
         menu.add_command(label="バージョン情報", command=lambda: show_Ver())
+        menu.add_command(label="問い合わせ",command=lambda: send_Inquiry())
         menu.add_command(label="設定", command=lambda: show_SettingWindow(form))
         menu.add_separator()
         menu.add_command(label="一つ戻す", command=lambda: put_Undo(form))
