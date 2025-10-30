@@ -1,10 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, PhotoImage,ttk
-import os
-import cv2
-import numpy as np
+from tkinter import messagebox
 
-from highright_file import(set_VideoHighlight,clear_AllvideoHighlights,clear_AvideoHighlight)
 from menu_file import (
     show_AppInfo,
     show_Ver,
@@ -16,7 +12,7 @@ from menu_file import (
     paste_Video,
     cut_Video,
     delete_Video,
-    save_File,
+    show_SelectSave,
     open_File,
     create_NewFile,
 )
@@ -68,23 +64,23 @@ def click_Left(form, event, click_ctrl):
 
                 #すでに選択されている動画をクリックした場合
                 if widget in form.selected_videos:
-                    clear_AvideoHighlight(form, widget)
+                    form.clear_AvideoHighlight(widget)
                     del form.selected_videos[widget]
                 
                 #新たに選択された動画をクリックした場合
                 else:
-                    set_VideoHighlight(form, widget)
+                    form.set_VideoHighlight(widget)
                     form.selected_videos[widget]=True
                     form.lbl_timestamp.config(text="00:00/00:00")
                     form.stop_Video()
 
             else: # Ctrlキーが押されていない場合
                 # いったんすべての選択を解除
-                clear_AllvideoHighlights(form)
+                form.clear_AllvideoHighlights()
                 form.selected_videos.clear()
 
                 # 現在選択中のラベルを保存
-                set_VideoHighlight(form, widget)
+                form.set_VideoHighlight(widget)
                 form.selected_videos[widget]=True
 
 
@@ -101,7 +97,7 @@ def click_Left(form, event, click_ctrl):
             if widget not in [form.footer.btn_rewind, form.footer.btn_frameBack, form.footer.btn_playPause, form.footer.btn_frameForward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_deleteVideo, form.header.btn_sizeMinus, form.header.btn_sizePlus, form.header.lbl_videoName,form.header.btn_sort]:
                 form.stop_Video()
                 form.change_VideoState(tk.DISABLED)
-                clear_AllvideoHighlights(form)
+                form.clear_AllvideoHighlights()
                 form.selected_videos.clear() # 全てクリア
                 form.header.lbl_videoName.config(text="選択動画： なし")
                 form.lbl_timestamp.config(text="00:00/00:00")
@@ -144,8 +140,8 @@ def right_clickmenu(form, event):
 
         save_menu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="保存", menu=save_menu)
-        save_menu.add_command(label="上書き保存", command=lambda: save_File(form, overwrite=True))    
-        save_menu.add_command(label="名前を付けて保存", command=lambda: save_File(form, overwrite=False))
+        save_menu.add_command(label="上書き保存", command=lambda: show_SelectSave(form, overwrite=True))    
+        save_menu.add_command(label="名前を付けて保存", command=lambda: show_SelectSave(form, overwrite=False))
 
         open_menu = tk.Menu(menu, tearoff=0)
     

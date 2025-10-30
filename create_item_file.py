@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, PhotoImage,ttk,Menu
+from tkinter import ttk
 
 from menu_file import(delete_Video,show_LogWindow,show_FileWindow)
 from genre_file import(show_GenreWindow)

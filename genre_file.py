@@ -1,6 +1,8 @@
-import tkinter as tk
-from tkinter import messagebox, ttk
 import os
+
+import tkinter as tk
+from tkinter import messagebox
+
 from log_file import(add_log)
 
 MAX_GENRE=30
@@ -263,8 +265,6 @@ def set_Genre(form, genre):
             if genre is None:
                 # ジャンル解除
                 form.all_videos[target_filepath]['genre'] = None
-                # ログに記録
-                add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを解除")
 
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(target_filepath)
@@ -273,8 +273,6 @@ def set_Genre(form, genre):
             # ジャンルを設定する場合
             else:
                 form.all_videos[target_filepath]['genre'] = genre
-                # ログに記録
-                add_log(f"動画 {os.path.basename(target_filepath)} のジャンルを「{genre}」に設定")
 
                 # ファイル名のみを抽出して表示
                 file_name = os.path.basename(target_filepath)
@@ -288,37 +286,39 @@ def check_Genre(form):
     # all_videos がなければ何もしない
     if not hasattr(form, "all_videos") or not form.all_videos:
         return
+    
+    # 選択されているジャンル名の集合を作る
+    active_genres = {form.genre_list[i] for i, v in enumerate(form.genre_checkedList) if v}
+
+    sorted_all_videos = sorted(
+        form.all_videos.items(),
+        key=lambda x: x[1]['videoID']
+    )
 
     # いずれも未選択なら全表示（順序を詰める）
     if not any(form.genre_checkedList):
-        visible_items = list(form.all_videos.items())
+        visible_items = sorted_all_videos
     else:
-        # 選択されているジャンル名の集合を作る
-        active_genres = {form.genre_list[i] for i, v in enumerate(form.genre_checkedList) if v}
         # 表示対象のみ抽出（ジャンルが設定されていて active_genres に含まれるものを表示）                                   
         visible_items = [
-            (path, info) for path, info in form.all_videos.items()
+            (path, info) for path, info in sorted_all_videos
             if info.get('label') and info.get('genre') in active_genres
         ]
 
-    # 非表示にするものは先にすべて隠す
-    for path, info in form.all_videos.items():
-        widget = info.get('container') or info.get('label')
-        if widget:
-            widget.grid_remove()
+    # 非表示にするものを隠す
+    for info in form.all_videos.values():
+        label = info.get('label')
+        if label and label.winfo_ismapped():
+            label.grid_remove()
 
     # 表示対象を左上から詰めて配置
     for idx, (path, info) in enumerate(visible_items):
-        widget = info.get('container') or info.get('label')
-        if not widget:
+        label = info.get('label')
+        if not label:
             continue
         col = idx % getattr(form, 'col_size', 3)
         row = idx // getattr(form, 'col_size', 3)
-        widget.grid(row=row, column=col, padx=5, pady=5)
-
-    # 再配置
-    form.relocate_Video()
-
+        label.grid(row=row, column=col, padx=5, pady=5)
     
     if hasattr(form, "mainForm") and hasattr(form, "frm_setVideo"):
         form.frm_setVideo.update_idletasks()

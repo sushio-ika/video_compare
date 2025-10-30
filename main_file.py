@@ -1,15 +1,16 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox, PhotoImage,ttk
-import cv2
-from PIL import Image, ImageTk
 import threading
 import os
 import subprocess
 import shutil
-from tkinterdnd2 import TkinterDnD
 import time
 
-from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_DoubleLeft,set_VideoHighlight)
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import cv2
+from PIL import Image, ImageTk
+from tkinterdnd2 import TkinterDnD
+
+from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_DoubleLeft)
 from create_item_file import (create_widgets)
 from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video)
 from log_file import(add_log, init_log)
@@ -38,6 +39,7 @@ class main(TkinterDnD.Tk):
         form.video_state = True    # 動画の再生/一時停止状態
         form.timeorframe = True    # 再生時間表示を秒かフレームかを切り替える変数
         form.undo_list = None      # undo操作をするために使用するリスト
+        form.current_file = None  #現在開いているファイルのパス
 
         # ジャンルを選択するメニュー
         form.var_walk = tk.BooleanVar(form)
@@ -314,7 +316,7 @@ class main(TkinterDnD.Tk):
         check_Genre(form)
 
         # 選択状態にしてラベルに表示
-        set_VideoHighlight(form, video_label)
+        form.set_VideoHighlight(video_label)
         form.selected_videos[video_label]=True
         form.lbl_timestamp.config(text="00:00/00:00")
         form.set_NameLabel()
@@ -690,6 +692,20 @@ class main(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("エラー", f"再生に失敗しました: {e}")
     
+    def clear_AllvideoHighlights(form):
+        """全ての動画のハイライトをリセットする"""
+        for info in form.all_videos.values():
+            info['label'].config(bd=0, relief=tk.FLAT)
+            info['label'].config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
+
+    def clear_AvideoHighlight(form, label):
+        """特定の動画のハイライトをリセットする"""
+        label.config(bd=0, relief=tk.FLAT)
+        label.config(highlightbackground="#2C2C2C", highlightcolor="#2C2C2C", highlightthickness=0)
+
+    def set_VideoHighlight(form, label):
+        """選択された動画に枠線を適用する"""
+        label.config(bd=2, relief=tk.RAISED, highlightbackground="#5FB7FF", highlightcolor="#5FB7FF", highlightthickness=2)
 
 if __name__ == '__main__':
     app = main()
