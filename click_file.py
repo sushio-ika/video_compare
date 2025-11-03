@@ -14,6 +14,7 @@ from menu_file import (
     delete_Video,
     show_SelectSave,
     open_File,
+    save_File,
     create_NewFile,
 )
 from genre_file import (popup_select_genre)
@@ -140,7 +141,7 @@ def right_clickmenu(form, event):
 
         save_menu = tk.Menu(menu, tearoff=0)
         menu.add_cascade(label="保存", menu=save_menu)
-        save_menu.add_command(label="上書き保存", command=lambda: show_SelectSave(form, overwrite=True))    
+        save_menu.add_command(label="上書き保存", command=lambda: save_File(form, overwrite=True))    
         save_menu.add_command(label="名前を付けて保存", command=lambda: show_SelectSave(form, overwrite=False))
 
         open_menu = tk.Menu(menu, tearoff=0)

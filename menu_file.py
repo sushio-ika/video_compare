@@ -61,6 +61,9 @@ def paste_Video(form):
         for path in edit_list:
             if os.path.isfile(path):
                 form.add_Video(path)
+                # ジャンルチェックと再配置
+                form.relocate_Video()
+                check_Genre(form)
 
                 # 選択状態にしてラベルに表示
                 for filepath, info in form.all_videos.items():
@@ -148,7 +151,7 @@ def delete_Video(form):
         form.change_ExistvideoState(tk.DISABLED)
 
 
-def show_SelectSave(form, overwrite=False):
+def save_File(form, overwrite=False):
     """ファイルを保存する"""
     #上書き保存か名前を付けて保存（current_filepathの中身が存在しているかどうか）
     if overwrite and form.current_file:
@@ -165,34 +168,34 @@ def show_SelectSave(form, overwrite=False):
             return
         
         form.current_file = file_path
-        videos=[]
-        n=1
-        # videoID でソート
-        sorted_videos = sorted(
-            form.all_videos.items(),
-            key=lambda x: x[1]['videoID']
-        )
-        for path,info in sorted_videos:
-            videos.append({f"video{n}":{"filepath":path,"videoid":info["videoID"],"genre":info["genre"]}})
-            n+=1
+    videos=[]
+    n=1
+    # videoID でソート
+    sorted_videos = sorted(
+        form.all_videos.items(),
+        key=lambda x: x[1]['videoID']
+    )
+    for path,info in sorted_videos:
+        videos.append({f"video{n}":{"filepath":path,"videoid":info["videoID"],"genre":info["genre"]}})
+        n+=1
 
-        if (n-1)!=len(form.all_videos):
-            messagebox.showerror("エラー","保存操作でエラーが発生しました")
+    if (n-1)!=len(form.all_videos):
+        messagebox.showerror("エラー","保存操作でエラーが発生しました")
 
-        savedata = {
-            "genre":form.genre_list,
-            "check":form.genre_checkedList,
-            "size": form.col_size,
-            "num":n-1,
-            "videos": videos 
-        }
+    savedata = {
+        "genre":form.genre_list,
+        "check":form.genre_checkedList,
+        "size": form.col_size,
+        "num":n-1,
+        "videos": videos 
+    }
 
-        with open(form.current_file, "w", encoding="utf-8") as f:
-            json.dump(savedata, f, indent=4)#JSON形式で保存
+    with open(form.current_file, "w", encoding="utf-8") as f:
+        json.dump(savedata, f, indent=4)#JSON形式で保存
 
-        print("保存完了", "ファイルが正常に保存されました。")
+    print("保存完了", "ファイルが正常に保存されました。")
 
-        form.title(os.path.basename(form.current_file))
+    form.title(os.path.basename(form.current_file))
 
 def open_File(form):
     """ファイルを開く"""
@@ -276,18 +279,24 @@ def create_NewFile(form):
 
 def show_SelectSave(form,overwrite=False):
     ow=overwrite
+    if ow and form.current_file:
+        save_File(form,ow)
+        return
+    
     saveselect_window = tk.Toplevel(form)
     saveselect_window.title("保存方法選択画面")
+    saveselect_window.config(bg="#FFFFFF")
     saveselect_window.geometry("300x300")
     saveselect_window.wm_overrideredirect(True)
     saveselect_window.resizable(False, False)
+    saveselect_window.focus_set()
 
     x = (saveselect_window.winfo_screenwidth() - 500) // 2
     y = (saveselect_window.winfo_screenheight() - 400) // 2
     saveselect_window.geometry(f"+{x}+{y}")
 
     btn_close=tk.Button(saveselect_window,text="✕",bg="#2E2E2E",fg="#FFFFFF",command=saveselect_window.destroy)
-    btn_savePass=tk.Button(saveselect_window,text="パスのみ保存",width=30,height=3,command=lambda: show_SelectSave(form,ow))
+    btn_savePass=tk.Button(saveselect_window,text="パスのみ保存",width=30,height=3,command=lambda: save_File(form,ow))
     btn_saveVideo=tk.Button(saveselect_window,text="動画ごと保存",width=30,height=3,command=lambda: messagebox.showinfo("情報","未実装"))
 
     btn_close.grid(row=0,column=2)
@@ -396,12 +405,16 @@ def show_FileWindow(form):
     form.file_window.btn_openFile.grid(row=1,column=0)
     form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
-    form.file_window.btn_saveFile = tk.Button(frm_menu, text="保存", width=20, command=lambda: show_SelectSave(form, overwrite=False))
+    form.file_window.btn_saveFile = tk.Button(frm_menu, text="上書き保存", width=20, command=lambda: save_File(form, overwrite=True))
     form.file_window.btn_saveFile.grid(row=2,column=0)
     form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
+    form.file_window.btn_owsaveFile = tk.Button(frm_menu, text="名前を付けて保存", width=20, command=lambda: show_SelectSave(form, overwrite=False))
+    form.file_window.btn_owsaveFile.grid(row=3,column=0)
+    form.file_window.btn_owsaveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
     form.file_window.btn_newFile = tk.Button(frm_menu, text="新規作成", width=20, command=lambda: create_NewFile(form))
-    form.file_window.btn_newFile.grid(row=3,column=0)
+    form.file_window.btn_newFile.grid(row=4,column=0)
     form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
 

@@ -160,6 +160,8 @@ def popup_select_genre(form):
         menu.add_command(label="このジャンルを削除", command=lambda: delete_Genre(form,selected_genre))
         menu.post(event.x_root, event.y_root)
 
+    if len(form.selected_videos)<=0:
+        return
     form.new_window = tk.Toplevel(form)
     form.new_window.title("ジャンル選択画面")
     form.new_window.geometry("500x400")

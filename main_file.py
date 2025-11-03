@@ -12,9 +12,9 @@ from tkinterdnd2 import TkinterDnD
 
 from click_file import (click_Left, right_clickmenu, scroll_MouseWheel, click_DoubleLeft)
 from create_item_file import (create_widgets)
-from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video)
+from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video,show_SelectSave,open_File,create_NewFile)
 from log_file import(add_log, init_log)
-from genre_file import(check_Genre)
+from genre_file import(check_Genre,popup_select_genre)
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -64,24 +64,28 @@ class main(TkinterDnD.Tk):
 
         create_widgets(form)
 
-        form.bind("<Button-3>", lambda event: right_clickmenu(form, event))
+        form.mainForm.bind("<Button-3>", lambda event: right_clickmenu(form, event))
         form.bind("<Button-1>", lambda event: click_Left(form, event, False))
         form.bind("<Control-Button-1>", lambda event: click_Left(form, event, True))
         form.bind("<MouseWheel>", lambda event: scroll_MouseWheel(form, event))
         form.bind("<Double-Button-1>",lambda event: click_DoubleLeft(form,event))
 
         # ショートカットキー
-        form.bind_all("-", lambda event: form.change_VideoSize(form.col_size + 1)) #-
-        form.bind_all(";", lambda event: form.change_VideoSize(form.col_size - 1)) #+
-        form.bind_all(",", lambda event: form.rewind_Flame()) #<
-        form.bind_all(".", lambda event: form.forward_Flame()) #>
-        form.bind_all("k", lambda event: form.change_PlayPause()) #再生/一時停止
-        form.bind_all("j", lambda event: form.rewind_Video()) #5秒巻き戻し
-        form.bind_all("l", lambda event: form.forward_Video()) #5秒早送り
-        form.bind_all("<Control-c>", lambda event: copy_Video(form)) #コピー
-        form.bind_all("<Control-x>", lambda event: cut_Video(form)) #カット
-        form.bind_all("<Control-v>", lambda event: paste_Video(form)) #ペースト
-        form.bind_all("<Delete>", lambda event: delete_Video(form)) #削除
+        form.bind(",", lambda event: form.rewind_Flame()) #<
+        form.bind(".", lambda event: form.forward_Flame()) #>
+        form.bind("k", lambda event: form.change_PlayPause()) #再生/一時停止
+        form.bind("j", lambda event: form.rewind_Video()) #5秒巻き戻し
+        form.bind("l", lambda event: form.forward_Video()) #5秒早送り
+        form.bind("<Control-t>", lambda event: form.select_Video()) #動画追加
+        form.bind("<Control-g>", lambda event: popup_select_genre(form)) #ジャンル設定
+        form.bind("<Control-a>", lambda event: form.select_AllVideo()) #全選択
+        form.bind("<Control-c>", lambda event: copy_Video(form)) #コピー
+        form.bind("<Control-x>", lambda event: cut_Video(form)) #カット
+        form.bind("<Control-v>", lambda event: paste_Video(form)) #ペースト
+        form.bind("<Control-s>", lambda event: show_SelectSave(form,overwrite=True)) #ファイルを保存
+        form.bind("<Control-o>", lambda event: open_File(form)) #ファイルを開く
+        form.bind("<Control-n>", lambda event: create_NewFile(form)) #ファイルを新規作成
+        form.bind("<Delete>", lambda event: delete_Video(form)) #削除
 
         form.change_VideoSize(form.col_size)
         form.change_VideoState(tk.DISABLED)
@@ -256,6 +260,10 @@ class main(TkinterDnD.Tk):
         for file_path in file_paths:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
                 form.add_Video(file_path)
+                # ジャンルチェックと再配置
+                form.relocate_Video()
+                check_Genre(form)
+
 
     def select_Video(form):
         """ファイルダイアログから動画を選択する関数"""
@@ -267,6 +275,12 @@ class main(TkinterDnD.Tk):
         for file_path in file_paths:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
                 form.add_Video(file_path)
+                # ジャンルチェックと再配置
+                form.relocate_Video()
+                check_Genre(form)
+
+
+
     
     def add_Video(form, file_path):
         """動画をアプリに追加し、再生を準備する関数"""
@@ -312,8 +326,6 @@ class main(TkinterDnD.Tk):
             form.update_Image(video_label, img_tk)
 
         form.change_ExistvideoState(tk.NORMAL)
-        form.relocate_Video()
-        check_Genre(form)
 
         # 選択状態にしてラベルに表示
         form.set_VideoHighlight(video_label)
@@ -436,6 +448,18 @@ class main(TkinterDnD.Tk):
         form.footer.btn_playPause.config(text="▶")
         form.update_Timestamp(file_path)
 
+    def change_TimeFrame(form):
+        """タイム表示/フレーム表示を切り替え、選択動画の表示を更新する"""
+        form.timeorframe = not form.timeorframe
+        # 選択が単一のときはその動画のタイムスタンプを更新
+        if len(form.selected_videos) == 1:
+            file_path = form.get_Filepath()
+            if file_path:
+                form.update_Timestamp(file_path)
+        else:
+            # 選択が無いか複数選択のときはヘッダのタイム表示をリセット
+            form.lbl_timestamp.config(text="00:00/00:00")
+
     def update_Timestamp(form, file_path):
         """選択中の動画のタイムスタンプを更新する関数"""
         if form.timeorframe:
@@ -481,6 +505,8 @@ class main(TkinterDnD.Tk):
             form.prgbar_videoTime['maximum'] = total_frames
             form.prgbar_videoTime['value'] = current_frame
 
+        
+
 
     def get_VideoTime(form, file_path):
         """指定された動画の再生時間情報を返す"""
@@ -517,12 +543,6 @@ class main(TkinterDnD.Tk):
                 
             return f"0/{total_frames}"
 
-    def change_TimeFrame(form):
-        if form.timeorframe==True:
-            form.timeorframe=False
-        else:
-            form.timeorframe=True
-        
 
     def change_VideoState(form, vstate):
         """動画再生コントロールの有効/無効を切り替える関数"""
@@ -532,7 +552,6 @@ class main(TkinterDnD.Tk):
         form.footer.btn_frameForward.config(state=vstate)
         form.footer.btn_skip.config(state=vstate)
         form.lbl_timestamp.config(state=vstate)
-        form.lbl_timestamp.config(text="00:00/00:00")
 
     def change_ExistvideoState(form,vstate):
         """動画が存在しない場合の動画ウィジェットの有効/無効を切り替える関数"""
@@ -692,6 +711,14 @@ class main(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("エラー", f"再生に失敗しました: {e}")
     
+    def select_AllVideo(form):
+        """全ての動画を選択状態にする"""
+        for info in form.all_videos.values():
+            form.set_VideoHighlight(info["label"])
+            form.selected_videos[info["label"]]=True
+        form.lbl_timestamp.config(text="00:00/00:00")
+        form.set_NameLabel()
+
     def clear_AllvideoHighlights(form):
         """全ての動画のハイライトをリセットする"""
         for info in form.all_videos.values():
