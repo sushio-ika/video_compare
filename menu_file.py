@@ -6,6 +6,7 @@ from tkinter import messagebox, filedialog, ttk
 
 from log_file import(add_log)
 from genre_file import(check_Genre)
+from mail_file import(send_mail)
 
 def show_AppInfo():
     """使い方を表示"""
@@ -21,8 +22,42 @@ def show_Ver():
                         "バージョン\tver.0.0.3\n"
                         "更新日\t2025/10/27\n")
 
-def send_Inquiry():
+def show_MailWindow(form):
     """お問い合わせメールを送信"""
+    form.mail_window = tk.Toplevel(form)
+    form.mail_window.title("メール送信画面")
+    form.mail_window.geometry("500x400")
+    form.mail_window.resizable(False, False)
+
+    x = (form.mail_window.winfo_screenwidth() - 500) // 2
+    y = (form.mail_window.winfo_screenheight() - 400) // 2
+    form.mail_window.geometry(f"+{x}+{y}")
+ 
+    # 操作パネル
+    mail_frame = tk.Frame(form.mail_window)
+    mail_frame.pack(fill=tk.X, padx=8, pady=(0,8))
+
+    # メール内容入力欄
+    lbl_mail = tk.Label(mail_frame, text="お問い合わせ内容を入力してください")
+    lbl_mail.pack(anchor="w")
+    chb = tk.Checkbutton(mail_frame, text=content+f"({str(genre_sum[i])})",variable=content, command=lambda x=i: set_genre(form, x))
+    chb.pack()
+
+    form.txt_mail = tk.Text(mail_frame, width=60, height=20)
+    form.txt_mail.pack()
+    
+    # 送信ボタン
+    btn_send = tk.Button(mail_frame, text="送信", width=10,height=5 ,command=lambda: btn_click(form))
+    btn_send.pack()
+
+    form.txt_mail.focus_set()
+    form.txt_mail.bind("<Return>", lambda event: btn_click(form))
+
+
+def btn_click(form):
+    con=form.txt_mail.get("1.0",tk.END).strip()
+    send_mail(form,con)
+    form.mail_window.destroy()
 
 def show_SettingWindow(form):
     """設定メニューを表示"""
