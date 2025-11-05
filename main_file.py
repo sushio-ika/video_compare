@@ -91,7 +91,7 @@ class main(TkinterDnD.Tk):
         form.change_VideoState(tk.DISABLED)
         form.change_ExistvideoState(tk.DISABLED)
         
-        init_log()
+        #init_log()
 
         #ウィンドウを中央に配置
         form.update_idletasks()
