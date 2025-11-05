@@ -60,7 +60,7 @@ def show_ShortKey():
 
 def show_Ver():
     messagebox.showinfo("バージョン情報",
-                        "バージョン\tver.1.0.1\n"
+                        "バージョン\tver.1.0.2\n"
                         "更新日\t2025/11/05\n")
 
 def show_MailWindow(form):

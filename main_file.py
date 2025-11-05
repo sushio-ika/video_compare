@@ -15,6 +15,7 @@ from create_item_file import (create_widgets)
 from menu_file import (copy_Video, paste_Video, cut_Video, delete_Video,show_SelectSave,open_File,create_NewFile)
 from log_file import(add_log, init_log)
 from genre_file import(check_Genre,popup_select_genre)
+from my_icon import get_photo_image4icon
 
 #定数
 WINDOW_WIDTH_SIZE=1280
@@ -57,7 +58,7 @@ class main(TkinterDnD.Tk):
         form.geometry(f"{WINDOW_WIDTH_SIZE}x{WINDOW_HEIGHT_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.resizable(False, False)
-        pic = tk.PhotoImage(file = "ml_icon4.png")  
+        pic = get_photo_image4icon()
         form.iconphoto(False, pic)
 
         # ドラッグ＆ドロップの設定
