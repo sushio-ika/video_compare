@@ -42,3 +42,4 @@ def send_mail(form, body):
         messagebox.showerror("エラー",f"予期せぬエラーが発生しました:{e}")
     else:
         server.quit()       # TLS通信終了
+        messagebox.showinfo("情報","メールが送信されました")

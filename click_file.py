@@ -3,6 +3,7 @@ from tkinter import messagebox
 
 from menu_file import (
     show_AppInfo,
+    show_ShortKey,
     show_Ver,
     show_MailWindow,
     show_SettingWindow,
@@ -132,6 +133,7 @@ def right_clickmenu(form, event):
     else:
         menu = tk.Menu(form, tearoff=0)
         menu.add_command(label="ヘルプ", command=lambda: show_AppInfo())
+        menu.add_command(label="ショートカットキー一覧",command=lambda: show_ShortKey())
         menu.add_command(label="バージョン情報", command=lambda: show_Ver())
         menu.add_command(label="問い合わせ",command=lambda: show_MailWindow(form))
         menu.add_command(label="設定", command=lambda: show_SettingWindow(form))
