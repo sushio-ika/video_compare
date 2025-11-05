@@ -57,6 +57,8 @@ class main(TkinterDnD.Tk):
         form.geometry(f"{WINDOW_WIDTH_SIZE}x{WINDOW_HEIGHT_SIZE}")
         form.tk_setPalette(background="#2E2E2E", foreground="#FFFFFF")
         form.resizable(False, False)
+        pic = tk.PhotoImage(file = "ml_icon4.png")  
+        form.iconphoto(False, pic)
 
         # ドラッグ＆ドロップの設定
         form.drop_target_register(1, 'DND_Files')
