@@ -182,13 +182,14 @@ def delete_Video(form):
                 info['stop_flag'].set()
             if info.get('capture'):
                     info['capture'].release()
-            widget.destroy()
 
             del form.all_videos[delete_filepath]
             
             # 削除後、選択されたラベルリストからも削除
             if widget in form.selected_videos:
                 del form.selected_videos[widget]
+            widget.destroy()
+
     
     # videoIDを割り振り直す
     sorted_videos = sorted(
@@ -225,18 +226,14 @@ def save_File(form, overwrite=False):
         
         form.current_file = file_path
     videos=[]
-    n=1
     # videoID でソート
     sorted_videos = sorted(
         form.all_videos.items(),
         key=lambda x: x[1]['videoID']
     )
-    for path,info in sorted_videos:
+    for n,(path,info) in enumerate(sorted_videos):
         videos.append({f"video{n}":{"filepath":path,"videoid":info["videoID"],"genre":info["genre"]}})
-        n+=1
 
-    if (n-1)!=len(form.all_videos):
-        messagebox.showerror("エラー","保存操作でエラーが発生しました")
 
     savedata = {
         "genre":form.genre_list,
@@ -246,12 +243,18 @@ def save_File(form, overwrite=False):
         "videos": videos 
     }
 
-    with open(form.current_file, "w", encoding="utf-8") as f:
-        json.dump(savedata, f, indent=4)#JSON形式で保存
+    try:
+        with open(form.current_file, "w", encoding="utf-8") as f:
+            json.dump(savedata, f, indent=4)#JSON形式で保存
 
-    print("保存完了", "ファイルが正常に保存されました。")
-
-    form.title(os.path.basename(form.current_file))
+        print("保存完了", "ファイルが正常に保存されました。")
+        form.title(os.path.basename(form.current_file))
+    except (IOError,OSError ) as e:
+        messagebox.showerror("エラー","ファイル保存操作で書き込みエラーが発生しました:{e}")
+    except TypeError as e:
+        messagebox.showerror("エラー","保存データに不正な値が含まれています:{e}")
+    except Exception as e:
+        messagebox.showerror("エラー","予期せぬエラーが発生しました:{e}")
 
 def open_File(form):
     """ファイルを開く"""
@@ -278,40 +281,46 @@ def open_File(form):
 
     form.all_videos={}
     form.selected_videos = {}
-        
-    with open(form.current_file, "r", encoding="utf-8") as f:
-        loaddata = json.load(f)
 
-    if "genre" in loaddata:
-        for g in loaddata["genre"]:
-            form.genre_list.append(g)
-    else:
-        form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
-
-    if "check" in loaddata:
-        for g in loaddata["check"]:
-            form.genre_checkedList.append(g)
-    else:
-        form.genre_checkedList = [0] * len(form.genre_list)
-        
-    if "size" in loaddata:#フォントサイズが指定されている場合
-        form.change_VideoSize(loaddata["size"])
-    else:
-        form.change_VideoSize(3)#デフォルトサイズ
-
-    if "videos" in loaddata:
-        video_list= loaddata["videos"]
-        for video_item in video_list:
-            for key,video_info in video_item.items():
-                file_path=video_info["filepath"]
-                genre=video_info["genre"]
-
-                if form.add_Video(file_path):
-                    form.header.btn_genre.config(state=tk.NORMAL)
-                    form.all_videos[file_path]['genre'] = genre
+    try:   
+        with open(form.current_file, "r", encoding="utf-8") as f:
+            loaddata = json.load(f)
     
-    
-    check_Genre(form)
+        if "genre" in loaddata:
+            for g in loaddata["genre"]:
+                form.genre_list.append(g)
+        else:
+            form.genre_list = ["歩き","走り","持ち上げる","投げる","表情","アクション"]
+
+        if "check" in loaddata:
+            for g in loaddata["check"]:
+                form.genre_checkedList.append(g)
+        else:
+            form.genre_checkedList = [0] * len(form.genre_list)
+        
+        if "size" in loaddata:#フォントサイズが指定されている場合
+            form.change_VideoSize(loaddata["size"])
+        else:
+            form.change_VideoSize(3)#デフォルトサイズ
+
+        if "videos" in loaddata:
+            video_list= loaddata["videos"]
+            for video_item in video_list:
+                for key,video_info in video_item.items():
+                    file_path=video_info["filepath"]
+                    genre=video_info["genre"]
+
+                    if form.add_Video(file_path):
+                        form.header.btn_genre.config(state=tk.NORMAL)
+                        form.all_videos[file_path]['genre'] = genre
+        check_Genre(form)
+    except FileNotFoundError:
+        messagebox.showerror("エラー",f"ファイルが見つかりません:{form.current_file}")
+    except json.JSONDecodeError as e:
+        messagebox.showerror("エラー",f"ファイルの内容が破損しています:{e}")
+    except Exception as e:
+        messagebox.showerror("エラー",f"予期せぬエラーが発生しました:{e}")
+
 
 def create_NewFile(form):
     """新しいファイルを作成する"""

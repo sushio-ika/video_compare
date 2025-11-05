@@ -295,8 +295,9 @@ class main(TkinterDnD.Tk):
             if not capture.isOpened():
                 messagebox.showerror("エラー", f"動画ファイルを開けませんでした: {file_path}")
                 return
-        except Exception:
-            messagebox.showerror("エラー","動画ファイルに問題があります")
+        except Exception as e:
+            messagebox.showerror("エラー",f"動画ファイルに問題があります:{e}")
+            return
 
         #動画表示用のラベルを作成
         video_label = tk.Label(form.frm_setVideo, width=WINDOW_WIDTH_SIZE // form.col_size - 10, height=int((WINDOW_WIDTH_SIZE // form.col_size - 10) * 9 / 16))
@@ -329,7 +330,7 @@ class main(TkinterDnD.Tk):
             img_tk=form.get_Image(frame,new_width)
             form.update_Image(video_label, img_tk)
             capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            
+
         form.change_ExistvideoState(tk.NORMAL)
 
         # 選択状態にしてラベルに表示
@@ -582,25 +583,28 @@ class main(TkinterDnD.Tk):
         s = max(1, min(5, s))
         form.col_size = s
 
-        # 新しい幅を計算
-        if s==1:
-            new_width = WINDOW_WIDTH_SIZE // form.col_size - 40  # パディングを考慮
-        else:
-            new_width = WINDOW_WIDTH_SIZE // form.col_size - 5  # パディングを考慮
-        new_height = int(new_width * 9 / 16)  # 16:9の比率
+        try:
+            # 新しい幅を計算
+            if s==1:
+                new_width = WINDOW_WIDTH_SIZE // form.col_size - 40  # パディングを考慮
+            else:
+                new_width = WINDOW_WIDTH_SIZE // form.col_size - 5  # パディングを考慮
+            new_height = int(new_width * 9 / 16)  # 16:9の比率
 
-        # すべての動画ラベルのサイズを変更
-        for idx, info in enumerate(form.all_videos.values()):
-            label = info['label']
-            label.config(width=new_width, height=new_height)
-            last_frame = info.get('last_frame')
+            # すべての動画ラベルのサイズを変更
+            for idx, info in enumerate(form.all_videos.values()):
+                label = info['label']
+                label.config(width=new_width, height=new_height)
+                last_frame = info.get('last_frame')
 
-            if last_frame is not None:                
-                img_tk = form.get_Image(last_frame,new_width)
-                form.update_Image(label, img_tk)
+                if last_frame is not None:                
+                    img_tk = form.get_Image(last_frame,new_width)
+                    form.update_Image(label, img_tk)
 
-        # ジャンル設定を反映
-        check_Genre(form)
+            # ジャンル設定を反映
+            check_Genre(form)
+        except Exception as e:
+            messagebox.showerror("エラー",f"動画サイズ変更処理でエラーが発生しました:{e}")
         
         # 画面表示サイズが最大または最小のとき、それぞれのボタンを無効化
         if s>=5:

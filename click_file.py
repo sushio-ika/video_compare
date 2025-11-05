@@ -46,12 +46,18 @@ def click_DoubleLeft(form,event):
         
         if videoid==-1:
             messagebox.showerror("エラー","複数の動画が選択されています。") # -1が返ってくるため
+            return
         elif videonum==0:
             messagebox.showerror("エラー","動画がまだありません。") # 念のため
+            return
         else:
-            form.change_VideoSize(1)
-            point=videoid / videonum
-            form.move_Scrollbar(point)
+            try:
+                form.change_VideoSize(1)
+                point=videoid / videonum
+                form.move_Scrollbar(point)
+            except:
+                messagebox.showerror("エラー","画面の位置遷移でエラーが発生しました")
+                return
 
 def click_Left(form, event, click_ctrl):
         """マウスの左クリック処理"""

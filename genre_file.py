@@ -139,10 +139,14 @@ def popup_select_genre(form):
             result=messagebox.askyesno("確認",f"ジャンル「{genre}」を本当に削除しますか？")
             
             if result:
-                index = form.genre_list.index(genre)
-                form.genre_list.pop(index)
-                form.genre_checkedList.pop(index)
-                lb.delete(lb.curselection())
+                try:
+                    index = form.genre_list.index(genre)
+                    form.genre_list.pop(index)
+                    form.genre_checkedList.pop(index)
+                    lb.delete(lb.curselection())
+                except:
+                    messagebox.showerror("エラー","削除操作でエラーが発生しました")
+                    return
                 popup_select_genre(form)
             else:
                 return
@@ -263,24 +267,29 @@ def set_Genre(form, genre):
                 target_filepath = file_path
                 break
         
-        if target_filepath:
-            # ジャンルを解除する場合
-            if genre is None:
-                # ジャンル解除
-                form.all_videos[target_filepath]['genre'] = None
+        try:
+            if target_filepath:
+                # ジャンルを解除する場合
+                if genre is None:
+                    # ジャンル解除
+                    form.all_videos[target_filepath]['genre'] = None
 
-                # ファイル名のみを抽出して表示
-                file_name = os.path.basename(target_filepath)
-                form.header.lbl_videoName.config(text=f"選択動画： {file_name}")
+                    # ファイル名のみを抽出して表示
+                    file_name = os.path.basename(target_filepath)
+                    form.header.lbl_videoName.config(text=f"選択動画： {file_name}")
 
-            # ジャンルを設定する場合
-            else:
-                form.all_videos[target_filepath]['genre'] = genre
+                # ジャンルを設定する場合
+                else:
+                    form.all_videos[target_filepath]['genre'] = genre
 
-                # ファイル名のみを抽出して表示
-                file_name = os.path.basename(target_filepath)
+                    # ファイル名のみを抽出して表示
+                    file_name = os.path.basename(target_filepath)
                 
-                form.header.lbl_videoName.config(text=f"選択動画： [{genre}] {file_name}")
+                    form.header.lbl_videoName.config(text=f"選択動画： [{genre}] {file_name}")
+        except tk.TclError as e:
+            messagebox.showerror("エラー","ウィジェットエラーが発生しました:{e}")
+        except Exception as e:
+            messagebox.showerror("エラー","予期せぬエラーが発生しました")
         check_Genre(form)
 
 
