@@ -12,9 +12,29 @@ def show_AppInfo():
     """使い方を表示"""
     messagebox.showinfo(
         "マルチリンクの使い方",
-        "1. 動画を追加するには、ドラッグ&ドロップまたは右下の「追加」ボタンを使用します。\n"
-        "2. 左下の再生コントロールで動画を操作します。\n"
-        "3. 動画をダブルクリックすると動画が拡大表示されます。"
+        "※ ご不明な点などございましたら、右クリックして「問い合わせ」からご連絡ください。\n\n"
+        "動画の追加方法\n"
+        "------------------------------\n"
+        "1. 動画ファイルをドラッグ&ドロップ\n"
+        "2. 右下の「追加」ボタンで任意の動画を選択\n"
+        "※ 追加した動画を「並び替え」ボタンを押すことで順序を入れ替えることができます。\n"
+        "※ 追加した動画をダブルクリックすることで最大サイズで表示できます。\n"
+        "ジャンルの設定方法\n"
+        "------------------------------\n"
+        "1. アプリに追加された任意の動画を一つ以上選択\n"
+        "2. 右クリックして「ジャンル設定」を選択\n"
+        "3. 好みのジャンルを選択、または新たにジャンルを追加して確定\n"
+        "4. アプリ画面左上の「ジャンル」ボタンから設定したジャンル別に絞り込む\n\n"
+        "動画の再生方法\n"
+        "------------------------------\n"
+        "1. アプリに追加された任意の動画を一つ選択\n"
+        "2. 左下の再生ボタンなどで動画を再生\n"
+        "3. 再生時間を左クリックして、秒表示とフレーム表示を切り替え\n"
+        "※ 動画を再生するだけの場合は右クリックして「メディアで再生」を選択するとメディアプレーヤーで再生できます。\n\n"
+        "その他\n"
+        "------------------------------\n"
+        "・アプリ画面右上の「＋」ボタン「－」ボタンをクリックして、動画の表示サイズを変更\n"
+        "・動画を一つ選択した状態で、アプリ画面中央上部の「選択動画：（例：~.mp4）」を右クリックして、「コピー」を選択して、動画名をコピー\n"    
     )
 
 def show_Ver():
@@ -40,8 +60,6 @@ def show_MailWindow(form):
     # メール内容入力欄
     lbl_mail = tk.Label(mail_frame, text="お問い合わせ内容を入力してください")
     lbl_mail.pack(anchor="w")
-    chb = tk.Checkbutton(mail_frame, text=content+f"({str(genre_sum[i])})",variable=content, command=lambda x=i: set_genre(form, x))
-    chb.pack()
 
     form.txt_mail = tk.Text(mail_frame, width=60, height=20)
     form.txt_mail.pack()
@@ -51,7 +69,10 @@ def show_MailWindow(form):
     btn_send.pack()
 
     form.txt_mail.focus_set()
-    form.txt_mail.bind("<Return>", lambda event: btn_click(form))
+
+    def on_entry_enter(event):
+        btn_click(form)
+    form.txt_mail.bind("<Return>", on_entry_enter)
 
 
 def btn_click(form):
@@ -341,7 +362,7 @@ def show_SelectSave(form,overwrite=False):
 def show_LogWindow(form):
     """ログ表示ウィンドウを表示"""
     if hasattr(form, 'log_window') and form.log_window.winfo_exists():
-        form.log_window.lift()  # すでにウィンドウが存在する場合は前面に持ってくる
+        form.log_window.destroy()  # すでにウィンドウが存在する場合は前面に持ってくる
         return
 
     form.log_window = tk.Toplevel(form)
@@ -394,7 +415,8 @@ def show_LogWindow(form):
 def show_FileWindow(form):
     """ファイル機能選択ウィンドウを表示"""
     if hasattr(form, 'file_window') and form.file_window.winfo_exists():
-        form.file_window.destroy()  # すでにウィンドウが存在する場合は前面に持ってくる
+        form.file_window.destroy()
+        return
 
     form.file_window = tk.Toplevel(form)
     form.file_window.configure(bg="#2E2E2E")
@@ -411,8 +433,8 @@ def show_FileWindow(form):
     
     form.update_idletasks()
 
-    fWindow_width = 200
-    fWindow_height = 400
+    fWindow_width = 190
+    fWindow_height = 180
 
     # 画面上の配置位置を計算（ヘッダーの下、左端）
     pos_x = form.winfo_rootx()

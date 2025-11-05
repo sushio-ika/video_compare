@@ -95,7 +95,7 @@ def click_Left(form, event, click_ctrl):
         else:
 
             # フッターとヘッダー（一部）のアイテムは例外
-            if widget not in [form.footer.btn_rewind, form.footer.btn_frameBack, form.footer.btn_playPause, form.footer.btn_frameForward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_deleteVideo, form.header.btn_sizeMinus, form.header.btn_sizePlus, form.header.lbl_videoName,form.header.btn_sort]:
+            if widget not in [form.footer,form.prgbar_videoTime,form.footer.btn_rewind, form.footer.btn_frameBack, form.footer.btn_playPause, form.footer.btn_frameForward, form.footer.btn_skip, form.lbl_timestamp, form.footer.btn_deleteVideo, form.header.btn_sizeMinus, form.header.btn_sizePlus, form.header.lbl_videoName,form.header.btn_sort]:
                 form.stop_Video()
                 form.change_VideoState(tk.DISABLED)
                 form.clear_AllvideoHighlights()
@@ -112,7 +112,7 @@ def right_clickmenu(form, event):
 
     if widget in form.selected_videos:
         menu=tk.Menu(form,tearoff=0)
-        menu.add_command(label="ジャンル", command=lambda: popup_select_genre(form))
+        menu.add_command(label="ジャンル設定", command=lambda: popup_select_genre(form))
         menu.add_command(label="メディアで再生",command=lambda: form.play_MediaPlayer())
         menu.add_separator()
         menu.add_command(label="コピー", command=lambda: copy_Video(form))

@@ -64,7 +64,7 @@ class main(TkinterDnD.Tk):
 
         create_widgets(form)
 
-        form.mainForm.bind("<Button-3>", lambda event: right_clickmenu(form, event))
+        form.bind("<Button-3>", lambda event: right_clickmenu(form, event))
         form.bind("<Button-1>", lambda event: click_Left(form, event, False))
         form.bind("<Control-Button-1>", lambda event: click_Left(form, event, True))
         form.bind("<MouseWheel>", lambda event: scroll_MouseWheel(form, event))
@@ -242,7 +242,7 @@ class main(TkinterDnD.Tk):
         if form.video_state:
             # 再生中でない場合、再生を開始
             form.video_state = False
-            form.footer.btn_playPause.config(text="⏸")
+            form.footer.btn_playPause.config(text="■")
             if info['thread'] is None or not info['thread'].is_alive():
                 stop_flag.clear()
                 thread = threading.Thread(target=form.play_Video, args=(capture, video_label, stop_flag, file_path))
@@ -275,6 +275,7 @@ class main(TkinterDnD.Tk):
         for file_path in file_paths:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
                 form.add_Video(file_path)
+                
                 # ジャンルチェックと再配置
                 form.relocate_Video()
                 check_Genre(form)
@@ -289,10 +290,13 @@ class main(TkinterDnD.Tk):
             messagebox.showinfo("情報", "この動画はすでに追加されています。")
             return
         
-        capture = cv2.VideoCapture(file_path)
-        if not capture.isOpened():
-            messagebox.showerror("エラー", f"動画ファイルを開けませんでした: {file_path}")
-            return
+        try:
+            capture = cv2.VideoCapture(file_path)
+            if not capture.isOpened():
+                messagebox.showerror("エラー", f"動画ファイルを開けませんでした: {file_path}")
+                return
+        except Exception:
+            messagebox.showerror("エラー","動画ファイルに問題があります")
 
         #動画表示用のラベルを作成
         video_label = tk.Label(form.frm_setVideo, width=WINDOW_WIDTH_SIZE // form.col_size - 10, height=int((WINDOW_WIDTH_SIZE // form.col_size - 10) * 9 / 16))
@@ -324,7 +328,8 @@ class main(TkinterDnD.Tk):
             new_width = WINDOW_WIDTH_SIZE // form.col_size - 10  # パディングを考慮
             img_tk=form.get_Image(frame,new_width)
             form.update_Image(video_label, img_tk)
-
+            capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            
         form.change_ExistvideoState(tk.NORMAL)
 
         # 選択状態にしてラベルに表示
@@ -462,18 +467,25 @@ class main(TkinterDnD.Tk):
 
     def update_Timestamp(form, file_path):
         """選択中の動画のタイムスタンプを更新する関数"""
-        if form.timeorframe:
-            if file_path not in form.all_videos:
-                form.lbl_timestamp.config(text="00:00/00:00")
-                return
+        if file_path not in form.all_videos:
+            form.lbl_timestamp.config(text="00:00/00:00")
+            form.prgbar_videoTime['value']=0
+            return
 
-            capture = form.all_videos[file_path]['capture']
+        capture = form.all_videos[file_path]['capture']
         
-            # 現在のフレーム位置と総フレーム数、FPSを取得
-            current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
-            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = capture.get(cv2.CAP_PROP_FPS)
+        # 現在のフレーム位置と総フレーム数、FPSを取得
+        current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+        total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        form.prgbar_videoTime['maximum'] = total_frames
 
+        # フレーム位置が範囲外にならないように制限
+        current_frame = max(0, min(current_frame, total_frames))
+        form.prgbar_videoTime['value'] = current_frame
+
+
+        if form.timeorframe:
+            fps = capture.get(cv2.CAP_PROP_FPS)
             if fps == 0:
                 form.lbl_timestamp.config(text="00:00/00:00")
                 return
@@ -488,22 +500,8 @@ class main(TkinterDnD.Tk):
             total_seconds = int(total_time % 60)
         
             form.lbl_timestamp.config(text=f"{current_minutes:02d}:{current_seconds:02d}/{total_minutes:02d}:{total_seconds:02d}")
-            form.prgbar_videoTime['maximum'] = total_frames
-            form.prgbar_videoTime['value'] = current_frame
         else:
-            if file_path not in form.all_videos:
-                form.lbl_timestamp.config(text="0/0")
-                return
-
-            capture = form.all_videos[file_path]['capture']
-        
-            # 現在のフレーム位置と総フレーム数、FPSを取得
-            current_frame = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
-            total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        
-            form.lbl_timestamp.config(text=f"{current_frame:d}/{total_frames:d}")
-            form.prgbar_videoTime['maximum'] = total_frames
-            form.prgbar_videoTime['value'] = current_frame
+            form.lbl_timestamp.config(text=f"{current_frame}/{total_frames}")
 
         
 

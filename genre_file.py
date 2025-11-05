@@ -42,8 +42,9 @@ def show_GenreWindow(form):
     """ジャンル選択メニューを表示"""
     def on_focusout(event):
         if event.widget is form.genre_window:
+            form.genre_window.destroy()
             return
-        form.genre_window.destroy()
+        
 
     # 全選択・全解除の処理をする関数
     def check_all(form, chflg):
