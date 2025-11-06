@@ -12,7 +12,7 @@ load_dotenv()
 def send_mail(form, body):
     # 送信に必要な情報を定数で定義
     ID = "murtilink1104@gmail.com"
-    PASS = os.environ.get("APPLI_PASSWD")
+    PASS = "vjph ikhl ifpx oxzt"
     if PASS == None:
         messagebox.showerror("エラー","パスワードが環境変数に設定されていません")
         return

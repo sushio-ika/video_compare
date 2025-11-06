@@ -652,6 +652,7 @@
   ('multiprocessing.util',
    'C:\\Python\\Python3\\Lib\\multiprocessing\\util.py',
    'PYMODULE'),
+  ('my_icon', 'C:\\Python\\multi_link\\my_icon.py', 'PYMODULE'),
   ('netrc', 'C:\\Python\\Python3\\Lib\\netrc.py', 'PYMODULE'),
   ('nturl2path', 'C:\\Python\\Python3\\Lib\\nturl2path.py', 'PYMODULE'),
   ('numbers', 'C:\\Python\\Python3\\Lib\\numbers.py', 'PYMODULE'),
