@@ -80,6 +80,7 @@ def click_Left(form, event, click_ctrl):
                     form.set_VideoHighlight(widget)
                     form.selected_videos[widget]=True
                     form.lbl_timestamp.config(text="00:00/00:00")
+                    form.lbl_fps.config(text=(0.0))
                     form.stop_Video()
 
             else: # Ctrlキーが押されていない場合
@@ -109,6 +110,7 @@ def click_Left(form, event, click_ctrl):
                 form.selected_videos.clear() # 全てクリア
                 form.header.lbl_videoName.config(text="選択動画： なし")
                 form.lbl_timestamp.config(text="00:00/00:00")
+                form.lbl_fps.config(text="(0.0)")
         
 
 

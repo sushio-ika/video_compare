@@ -127,7 +127,7 @@ def copy_Video(form):
             print(f"動画をコピーしました: {edit_list}")
         
         except tk.TclError as e:
-            print(f"クリップボードへのアクセスエラー: {e}")
+            messagebox.showerror("エラー",f"クリップボードへのアクセスエラー: {e}")
 
 def paste_Video(form):
     """動画を貼り付ける"""
@@ -148,13 +148,14 @@ def paste_Video(form):
                         form.set_VideoHighlight(info["label"])
                         form.selected_videos[info["label"]]=True
                         form.lbl_timestamp.config(text="00:00/00:00")
+                        form.lbl_fps.config(text="(0.0)")
                         form.set_NameLabel()
 
                 print(f"動画を貼り付けました: {edit_list}")
             else:
-                print("クリップボードの内容は有効なファイルパスではありません。")
+                messagebox.showerror("エラー","クリップボードの内容は有効なファイルパスではありません。")
     except tk.TclError:
-        print("クリップボードから有効なテキストを取得できませんでした。")
+        messagebox.showerror("エラー","クリップボードから有効なテキストを取得できませんでした。")
 
 def cut_Video(form):
     """動画を切り取る"""
@@ -179,7 +180,7 @@ def cut_Video(form):
             print(f"動画をカットしました: {cut_list}")
         
         except tk.TclError as e:
-            print(f"クリップボードへのアクセスエラー: {e}")
+            messagebox.showerror("エラー",f"クリップボードへのアクセスエラー: {e}")
 
 def delete_Video(form):
     """現在選択している動画を削除する"""
@@ -268,7 +269,7 @@ def save_File(form, overwrite=False):
         with open(form.current_file, "w", encoding="utf-8") as f:
             json.dump(savedata, f, indent=4)#JSON形式で保存
 
-        print("保存完了", "ファイルが正常に保存されました。")
+        messagebox.showinfo("保存完了", "ファイルが正常に保存されました。")
         form.title(os.path.basename(form.current_file))
     except (IOError,OSError ) as e:
         messagebox.showerror("エラー","ファイル保存操作で書き込みエラーが発生しました:{e}")
@@ -371,23 +372,45 @@ def show_SelectSave(form,overwrite=False):
     
     saveselect_window = tk.Toplevel(form)
     saveselect_window.title("保存方法選択画面")
-    saveselect_window.config(bg="#FFFFFF")
-    saveselect_window.geometry("300x300")
+    saveselect_window.config(bg="#2E2E2E")
     saveselect_window.wm_overrideredirect(True)
     saveselect_window.resizable(False, False)
     saveselect_window.focus_set()
+    
+    def on_focusout(event):
+        if not event.widget is saveselect_window:
+            return
+        saveselect_window.destroy()
+    
+    saveselect_window.bind("<FocusOut>", on_focusout)
+    
+    form.update_idletasks()
 
-    x = (saveselect_window.winfo_screenwidth() - 500) // 2
-    y = (saveselect_window.winfo_screenheight() - 400) // 2
-    saveselect_window.geometry(f"+{x}+{y}")
+    sWindow_width = 200
+    sWindow_height = 90
 
-    btn_close=tk.Button(saveselect_window,text="✕",bg="#2E2E2E",fg="#FFFFFF",command=saveselect_window.destroy)
-    btn_savePass=tk.Button(saveselect_window,text="パスのみ保存",width=30,height=3,command=lambda: save_File(form,ow))
-    btn_saveVideo=tk.Button(saveselect_window,text="動画ごと保存",width=30,height=3,command=lambda: messagebox.showinfo("情報","未実装"))
+    # 画面上の配置位置を計算（ヘッダーの下、左端）
+    pos_x = form.winfo_rootx()
+    pos_y = form.winfo_rooty() + form.header.winfo_height()
 
-    btn_close.grid(row=0,column=2)
-    btn_savePass.grid(row=1,column=1)
-    btn_saveVideo.grid(row=2,column=1)
+    # 画面外にはみ出さないように調整（必要なら）
+    screen_height = form.winfo_screenheight()
+    if pos_y + sWindow_height > screen_height:
+        sWindow_height = max(100, screen_height - pos_y)
+
+    saveselect_window.geometry(f"{sWindow_width}x{sWindow_height}+{pos_x}+{pos_y}")
+
+    frm_setbtn=tk.Frame(saveselect_window,bg="#000000")
+    frm_setbtn.pack(fill=tk.X,padx=8,pady=8)
+
+    btn_savePass=tk.Button(frm_setbtn,text="パスのみ保存",width=20, command=lambda: save_File(form,ow))
+    btn_savePass.pack(fill=tk.X)
+    btn_savePass.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
+    btn_saveVideo=tk.Button(frm_setbtn,text="動画ごと保存",width=20, command=lambda: messagebox.showinfo("情報","未実装"))
+    btn_saveVideo.pack(fill=tk.X)
+    btn_saveVideo.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
+
 
 def show_LogWindow(form):
     """ログ表示ウィンドウを表示"""
@@ -480,28 +503,28 @@ def show_FileWindow(form):
     # ボタンを表示するフレーム
     frm_menu = tk.Frame(form.file_window)
     frm_menu.config(bg="#2E2E2E")
-    frm_menu.pack(fill=tk.X, padx=8, pady=8)
+    frm_menu.pack(fill=tk.X,padx=8,pady=8)
 
     # 終了ボタン
     form.file_window.btn_closeApp = tk.Button(frm_menu, text="終了", width=20, command=form.close_App)
-    form.file_window.btn_closeApp.grid(row=0,column=0)
+    form.file_window.btn_closeApp.pack(fill=tk.X)
     form.file_window.btn_closeApp.config(bg="#D9534F", fg="#FFFFFF", activebackground="#C9302C", activeforeground="#FFFFFF", bd=0)
 
     # ファイル保存、開くボタン
     form.file_window.btn_openFile = tk.Button(frm_menu, text="開く", width=20, command=lambda: open_File(form))
-    form.file_window.btn_openFile.grid(row=1,column=0)
+    form.file_window.btn_openFile.pack(fill=tk.X)
     form.file_window.btn_openFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     form.file_window.btn_saveFile = tk.Button(frm_menu, text="上書き保存", width=20, command=lambda: save_File(form, overwrite=True))
-    form.file_window.btn_saveFile.grid(row=2,column=0)
+    form.file_window.btn_saveFile.pack(fill=tk.X)
     form.file_window.btn_saveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     form.file_window.btn_owsaveFile = tk.Button(frm_menu, text="名前を付けて保存", width=20, command=lambda: show_SelectSave(form, overwrite=False))
-    form.file_window.btn_owsaveFile.grid(row=3,column=0)
+    form.file_window.btn_owsaveFile.pack(fill=tk.X)
     form.file_window.btn_owsaveFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
     form.file_window.btn_newFile = tk.Button(frm_menu, text="新規作成", width=20, command=lambda: create_NewFile(form))
-    form.file_window.btn_newFile.grid(row=4,column=0)
+    form.file_window.btn_newFile.pack(fill=tk.X)
     form.file_window.btn_newFile.config(bg="#2E2E2E", fg="#FFFFFF", activebackground="#A7A7A7", activeforeground="#FFFFFF", bd=0)
 
 

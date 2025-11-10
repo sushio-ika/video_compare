@@ -62,23 +62,23 @@ def create_widgets(form):
     form.footer.pack(pady=5)
 
     # 巻き戻し
-    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", width=5, command=form.rewind_Video)
+    form.footer.btn_rewind = tk.Button(form.footer, text="<< 5s", bg="#353535", bd=0.5, width=5, command=form.rewind_Video)
     form.footer.btn_rewind.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 一コマ戻す
-    form.footer.btn_frameBack = tk.Button(form.footer, text="|<", width=5, command=form.rewind_Flame)
+    form.footer.btn_frameBack = tk.Button(form.footer, text="|<", bg="#353535", bd=0.5, width=5, command=form.rewind_Flame)
     form.footer.btn_frameBack.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 再生/一時停止
-    form.footer.btn_playPause = tk.Button(form.footer, text="▶", width=10, command=form.change_PlayPause)
+    form.footer.btn_playPause = tk.Button(form.footer, text="▶", bg="#353535", bd=0.5, width=10, command=form.change_PlayPause)
     form.footer.btn_playPause.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 一コマ進む
-    form.footer.btn_frameForward = tk.Button(form.footer, text=">|", width=5, command=form.forward_Flame)
+    form.footer.btn_frameForward = tk.Button(form.footer, text=">|", bg="#353535", bd=0.5, width=5, command=form.forward_Flame)
     form.footer.btn_frameForward.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 早送り
-    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", width=5, command=form.forward_Video)
+    form.footer.btn_skip = tk.Button(form.footer, text="5s >>", bg="#353535", bd=0.5, width=5, command=form.forward_Video)
     form.footer.btn_skip.pack(side=tk.LEFT, padx=5, pady=5)
 
     # 進捗バーとタイムスタンプ
@@ -88,7 +88,10 @@ def create_widgets(form):
     form.lbl_timestamp = tk.Label(form.footer, text="00:00/00:00")
     form.lbl_timestamp.config(font=("Helvetica", 16))
     form.lbl_timestamp.pack(side=tk.LEFT, padx=5, pady=5)
-        
+    
+    form.lbl_fps = tk.Label(form.footer, text="(0.0)")
+    form.lbl_fps.pack(side=tk.LEFT, padx=5, pady=5)
+    
     # 追加・削除ボタン
     form.footer.btn_addVideo = tk.Button(form.footer, text="追加", width=20, command=form.select_Video)
     form.footer.btn_addVideo.pack(side=tk.RIGHT, padx=5, pady=5)

@@ -340,6 +340,7 @@ class main(TkinterDnD.Tk):
         form.set_VideoHighlight(video_label)
         form.selected_videos[video_label]=True
         form.lbl_timestamp.config(text="00:00/00:00")
+        form.lbl_fps.config(text="(0.0)")
         form.set_NameLabel()
         
     def set_NameLabel(form):
@@ -371,6 +372,7 @@ class main(TkinterDnD.Tk):
                 form.header.lbl_videoName.config(text="選択動画： なし")
 
             form.lbl_timestamp.config(text="00:00/00:00")
+            form.lbl_fps.config(text="(0.0)")
             form.stop_Video()
 
 
@@ -430,6 +432,9 @@ class main(TkinterDnD.Tk):
                 time.sleep(delay)
             else:
                 time.sleep(1/30)
+                fps=30
+
+            form.lbl_fps.config(text=f"({fps})")
 
         # スレッドが終了したら、スレッド情報をクリア
         if file_path in form.all_videos:
@@ -468,11 +473,13 @@ class main(TkinterDnD.Tk):
         else:
             # 選択が無いか複数選択のときはヘッダのタイム表示をリセット
             form.lbl_timestamp.config(text="00:00/00:00")
+            form.lbl_fps.config(text="(0.0)")
 
     def update_Timestamp(form, file_path):
         """選択中の動画のタイムスタンプを更新する関数"""
         if file_path not in form.all_videos:
             form.lbl_timestamp.config(text="00:00/00:00")
+            form.lbl_fps.config(text="(0.0)")
             form.prgbar_videoTime['value']=0
             return
 
@@ -492,6 +499,7 @@ class main(TkinterDnD.Tk):
             fps = capture.get(cv2.CAP_PROP_FPS)
             if fps == 0:
                 form.lbl_timestamp.config(text="00:00/00:00")
+                form.lbl_fps.config(text="(0.0)")
                 return
 
             # 現在の再生時間（秒）を計算
@@ -554,6 +562,7 @@ class main(TkinterDnD.Tk):
         form.footer.btn_frameForward.config(state=vstate)
         form.footer.btn_skip.config(state=vstate)
         form.lbl_timestamp.config(state=vstate)
+        form.lbl_fps.config(state=vstate)
 
     def change_ExistvideoState(form,vstate):
         """動画が存在しない場合の動画ウィジェットの有効/無効を切り替える関数"""
@@ -722,6 +731,7 @@ class main(TkinterDnD.Tk):
             form.set_VideoHighlight(info["label"])
             form.selected_videos[info["label"]]=True
         form.lbl_timestamp.config(text="00:00/00:00")
+        form.lbl_fps.config(text="(0.0)")
         form.set_NameLabel()
 
     def clear_AllvideoHighlights(form):
