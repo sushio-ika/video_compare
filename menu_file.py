@@ -60,8 +60,8 @@ def show_ShortKey():
 
 def show_Ver():
     messagebox.showinfo("バージョン情報",
-                        "バージョン\tver.1.0.4\n"
-                        "更新日\t2025/11/06\n")
+                        "バージョン\tver.1.0.5\n"
+                        "更新日\t2025/11/10\n")
 
 def show_MailWindow(form):
     """お問い合わせメールを送信"""
@@ -137,7 +137,8 @@ def paste_Video(form):
 
         for path in edit_list:
             if os.path.isfile(path):
-                form.add_Video(path)
+                if (form.add_Video(path))==False:
+                    return
                 # ジャンルチェックと再配置
                 form.relocate_Video()
                 check_Genre(form)
@@ -328,7 +329,7 @@ def open_File(form):
         if "videos" in loaddata:
             video_list= loaddata["videos"]
             for video_item in video_list:
-                for key,video_info in video_item.items():
+                for video_info in video_item.values():
                     file_path=video_info["filepath"]
                     genre=video_info["genre"]
 

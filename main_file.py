@@ -262,10 +262,10 @@ class main(TkinterDnD.Tk):
         file_paths = form.tk.splitlist(event.data)
         for file_path in file_paths:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
-                form.add_Video(file_path)
-                # ジャンルチェックと再配置
-                form.relocate_Video()
-                check_Genre(form)
+                if form.add_Video(file_path):
+                   # ジャンルチェックと再配置
+                    form.relocate_Video()
+                    check_Genre(form)
 
 
     def select_Video(form):
@@ -277,11 +277,10 @@ class main(TkinterDnD.Tk):
         )
         for file_path in file_paths:
             if file_path.endswith(('.mp4', '.avi', '.mov', '.mkv')):
-                form.add_Video(file_path)
-                
-                # ジャンルチェックと再配置
-                form.relocate_Video()
-                check_Genre(form)
+                if form.add_Video(file_path):
+                   # ジャンルチェックと再配置
+                    form.relocate_Video()
+                    check_Genre(form)
 
 
 
@@ -291,16 +290,16 @@ class main(TkinterDnD.Tk):
         # すでに追加されている場合は無視
         if file_path in form.all_videos:
             messagebox.showinfo("情報", "この動画はすでに追加されています。")
-            return
+            return False
         
         try:
             capture = cv2.VideoCapture(file_path)
             if not capture.isOpened():
                 messagebox.showerror("エラー", f"動画ファイルを開けませんでした: {file_path}")
-                return
+                return False
         except Exception as e:
             messagebox.showerror("エラー",f"動画ファイルに問題があります:{e}")
-            return
+            return False
 
         #動画表示用のラベルを作成
         video_label = tk.Label(form.frm_setVideo, width=WINDOW_WIDTH_SIZE // form.col_size - 10, height=int((WINDOW_WIDTH_SIZE // form.col_size - 10) * 9 / 16))
@@ -342,6 +341,8 @@ class main(TkinterDnD.Tk):
         form.lbl_timestamp.config(text="00:00/00:00")
         form.lbl_fps.config(text="(0.0)")
         form.set_NameLabel()
+
+        return True
         
     def set_NameLabel(form):
         # 一つ選択されていたら動画再生コントロールを有効にしてラベルに動画名を表示

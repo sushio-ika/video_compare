@@ -44,11 +44,11 @@ def create_widgets(form):
     # 画面サイズを変更するボタン
     form.header.btn_sizeMinus = tk.Button(form.header, text="－", width=3, command=lambda: form.change_VideoSize(form.col_size + 1))
     form.header.btn_sizeMinus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_sizeMinus.config(font=("bold"),bg="#4A90E2", fg="#FFFFFF", activebackground="#A5D2FF", activeforeground="#FFFFFF", bd=0)
+    form.header.btn_sizeMinus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#A5D2FF", activeforeground="#FFFFFF", bd=0)
 
     form.header.btn_sizePlus = tk.Button(form.header, text="＋", width=3, command=lambda: form.change_VideoSize(form.col_size - 1))
     form.header.btn_sizePlus.pack(side=tk.RIGHT, padx=5, pady=5)
-    form.header.btn_sizePlus.config(font=("bold"),bg="#4A90E2", fg="#FFFFFF", activebackground="#A5D2FF", activeforeground="#FFFFFF", bd=0)
+    form.header.btn_sizePlus.config(bg="#4A90E2", fg="#FFFFFF", activebackground="#A5D2FF", activeforeground="#FFFFFF", bd=0)
 
 
 
